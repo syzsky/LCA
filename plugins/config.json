@@ -1,0 +1,20 @@
+{
+  "plugin_system_enabled": true,
+  "description": "插件系统全局配置 - 可在此开关插件功能",
+
+  "plugins": {
+    "ola": {
+      "enabled": true,
+      "priority": 10,
+      "description": "OLA欧拉插件",
+      "config": {
+        "dll_path": "OLA/OLAPlug_x64.dll",
+        "auto_bind_mode": {
+          "display": "normal",
+          "mouse": "normal",
+          "keypad": "normal"
+        }
+      }
+    }
+  }
+}

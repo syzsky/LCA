@@ -9,7 +9,14 @@ import os
 import shutil
 from typing import Dict, List, Optional, Any
 from .interface import IPluginAdapter, PluginCapability
-from plugins.adapters.ola.runtime_config import normalize_ola_auth_settings
+
+# 条件导入 OLA 相关模块（如果 OLA SDK 存在）
+try:
+    from plugins.adapters.ola.runtime_config import normalize_ola_auth_settings
+    _OLA_CONFIG_AVAILABLE = True
+except ImportError:
+    _OLA_CONFIG_AVAILABLE = False
+
 from utils.app_paths import get_config_path, get_user_data_dir
 
 logger = logging.getLogger(__name__)
@@ -46,6 +53,7 @@ class PluginManager:
     2. 优先级管理 - 根据配置自动选择插件
     3. 降级策略 - 失败自动切换备用插件
     4. 热加载 - 支持运行时加载/卸载插件
+    5. 多插件支持 - 支持 native/ola 等多种插件
     """
 
     def __init__(self):
@@ -112,26 +120,42 @@ class PluginManager:
         if plugin_name != "ola":
             return merged_config
 
-        plugin_settings = self._load_main_plugin_settings()
-        if 'ola_auth' not in plugin_settings:
+        if not _OLA_CONFIG_AVAILABLE:
             return merged_config
 
-        ola_auth = normalize_ola_auth_settings(plugin_settings.get('ola_auth'))
-        for key, value in ola_auth.items():
-            merged_config[key] = value
+        try:
+            plugin_settings = self._load_main_plugin_settings()
+            if 'ola_auth' not in plugin_settings:
+                return merged_config
+
+            ola_auth = normalize_ola_auth_settings(plugin_settings.get('ola_auth'))
+            for key, value in ola_auth.items():
+                merged_config[key] = value
+        except Exception as e:
+            logger.warning(f"合并 OLA 运行时配置失败: {e}")
 
         return merged_config
 
     def _create_default_config(self, config_path: str):
-        """创建默认配置文件"""
+        """创建默认配置文件（优先使用 Native 插件）"""
         default_config = {
             "plugin_system_enabled": True,
-            "description": "插件系统全局配置 - 可在此开关插件功能",
+            "description": "插件系统全局配置 - 默认使用 Native 纯Python原生插件",
             "plugins": {
-                "ola": {
+                "native": {
                     "enabled": True,
+                    "priority": 5,
+                    "description": "纯Python原生插件 - 无需外部DLL",
+                    "config": {
+                        "use_human_like_mouse": False,
+                        "ocr_language": "ch",
+                        "ocr_use_gpu": False
+                    }
+                },
+                "ola": {
+                    "enabled": False,
                     "priority": 10,
-                    "description": "OLA欧拉插件",
+                    "description": "OLA欧拉插件（需要DLL）",
                     "config": {
                         "dll_path": "OLA/OLAPlug_x64.dll",
                         "auto_bind_mode": {
@@ -192,7 +216,7 @@ class PluginManager:
         加载插件
 
         Args:
-            plugin_name: 插件名称
+            plugin_name: 插件名称 ("native" 或 "ola")
 
         Returns:
             bool: 加载是否成功
@@ -213,9 +237,22 @@ class PluginManager:
                 return False
 
             # 动态加载插件适配器
-            if plugin_name == "ola":
-                from plugins.adapters.ola.adapter import OLAAdapter
-                adapter = OLAAdapter()
+            if plugin_name == "native":
+                try:
+                    from plugins.adapters.native.adapter import NativeAdapter
+                    adapter = NativeAdapter()
+                except ImportError as e:
+                    logger.error(f"Native 插件导入失败: {e}")
+                    logger.info("请确认 plugins/adapters/native/ 目录存在且包含 adapter.py")
+                    return False
+            elif plugin_name == "ola":
+                try:
+                    from plugins.adapters.ola.adapter import OLAAdapter
+                    adapter = OLAAdapter()
+                except ImportError as e:
+                    logger.error(f"OLA 插件导入失败: {e}")
+                    logger.info("请确认 OLA SDK 已正确安装")
+                    return False
             else:
                 logger.error(f"未知的插件类型: {plugin_name}")
                 return False

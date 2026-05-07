@@ -1,12 +1,21 @@
 {
   "plugin_system_enabled": true,
-  "description": "插件系统全局配置 - 可在此开关插件功能",
-
+  "description": "插件系统全局配置 - 默认使用 Native 纯Python原生插件（无需OLA DLL）",
   "plugins": {
-    "ola": {
+    "native": {
       "enabled": true,
+      "priority": 5,
+      "description": "纯Python原生插件 - 使用pyautogui+pynput+paddleocr+pywin32，无需外部DLL",
+      "config": {
+        "use_human_like_mouse": false,
+        "ocr_language": "ch",
+        "ocr_use_gpu": false
+      }
+    },
+    "ola": {
+      "enabled": false,
       "priority": 10,
-      "description": "OLA欧拉插件",
+      "description": "OLA欧拉插件（需要DLL，默认禁用）",
       "config": {
         "dll_path": "OLA/OLAPlug_x64.dll",
         "auto_bind_mode": {

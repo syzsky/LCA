@@ -54,12 +54,6 @@ def _check_dependencies():
         deps['pynput'] = None
 
     try:
-        import paddleocr
-        deps['paddleocr'] = paddleocr.__version__
-    except ImportError:
-        deps['paddleocr'] = None
-
-    try:
         import win32gui
         deps['pywin32'] = 'installed'
     except ImportError:
@@ -71,13 +65,20 @@ def _check_dependencies():
     except ImportError:
         deps['pygetwindow'] = None
 
+    # OCR 是可选依赖（首次使用时自动下载模型）
+    try:
+        import paddleocr
+        deps['paddleocr'] = paddleocr.__version__
+    except ImportError:
+        deps['paddleocr'] = None
+        logger.info("paddleocr 未安装，OCR 功能将在首次使用时自动下载")
+
     return deps
 
 
 def _get_missing_deps(deps: dict) -> List[str]:
-    """获取未安装的依赖列表"""
+    """获取未安装的必选依赖列表"""
     required = ['pyautogui', 'opencv-python', 'numpy', 'pynput', 'pywin32']
-    optional = ['paddleocr', 'pygetwindow']
     missing = []
     for name in required:
         if deps.get(name) is None:

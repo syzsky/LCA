@@ -24,8 +24,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install pyinstaller
-        pip install -r requirements.txt
-      timeout-minutes: 30
+        pip install PySide6==6.9.1
+        pip install pyautogui opencv-python numpy pynput pywin32 pygetwindow
+        pip install pillow mss pyperclip PyMsgBox PyRect PyScreeze pytweening
+        pip install keyboard mouse comtypes dxcam PyDirectInput
+      timeout-minutes: 20
 
     - name: Build with PyInstaller
       run: |
@@ -37,7 +40,6 @@ jobs:
           --hidden-import=PySide6.QtWidgets `
           --hidden-import=pynput.keyboard._win32 `
           --hidden-import=pynput.mouse._win32 `
-          --hidden-import=paddleocr `
           --hidden-import=PIL `
           --hidden-import=cv2 `
           --hidden-import=numpy `
@@ -46,21 +48,38 @@ jobs:
           --hidden-import=win32gui `
           --hidden-import=win32con `
           --hidden-import=win32api `
+          --hidden-import=ctypes `
+          --hidden-import=plugins.adapters.native `
+          --hidden-import=plugins.adapters.native.adapter `
+          --hidden-import=plugins.core.interface `
+          --hidden-import=plugins.core.manager `
           --collect-all PySide6 `
-          --collect-all paddleocr `
           --collect-all pyautogui `
           --collect-all pynput `
+          --collect-all cv2 `
+          --collect-all numpy `
           --add-data "resources;resources" `
           --add-data "themes;themes" `
           --add-data "market;market" `
           --add-data "plugins/config.json;plugins" `
-          --add-data "plugins/adapters/native;plugins/adapters/native" `
           main.py
       timeout-minutes: 60
+
+    - name: Package
+      run: |
+        if (-not (Test-Path "dist/LCA/plugins/adapters")) {
+          New-Item -ItemType Directory -Path "dist/LCA/plugins/adapters" -Force
+        }
+        Copy-Item -Path "plugins/adapters/native" -Destination "dist/LCA/plugins/adapters/native" -Recurse -Force
+        Copy-Item -Path "plugins/config.json" -Destination "dist/LCA/plugins/config.json" -Force
+        Compress-Archive -Path "dist/LCA/*" -DestinationPath "dist/LCA-Native.zip" -Force
+        Write-Host "=== 构建产物 ==="
+        Get-ChildItem dist/ | Select-Object Name, @{N='Size(MB)';E={[math]::Round($_.Length/1MB,1)}} | Format-Table -AutoSize
+      timeout-minutes: 10
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: LCA-Native-${{ github.run_number }}
-        path: dist/LCA/
+        path: dist/LCA-Native.zip
         retention-days: 7

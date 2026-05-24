@@ -233,9 +233,7 @@ class MainWindowDialogMixin:
 
         else:
 
-            wechat_qr.setText("微信收款码\n请配置二维码")
-
-            wechat_qr.setObjectName("qr_placeholder")
+            wechat_qr.setStyleSheet("background-color: white; min-width: 200px; min-height: 200px; border: 1px dashed #ccc;")
 
         wechat_layout.addWidget(wechat_qr)
 
@@ -273,9 +271,7 @@ class MainWindowDialogMixin:
 
         else:
 
-            alipay_qr.setText("支付宝收款码\n请配置二维码")
-
-            alipay_qr.setObjectName("qr_placeholder")
+            alipay_qr.setStyleSheet("background-color: white; min-width: 200px; min-height: 200px; border: 1px dashed #ccc;")
 
         alipay_layout.addWidget(alipay_qr)
 

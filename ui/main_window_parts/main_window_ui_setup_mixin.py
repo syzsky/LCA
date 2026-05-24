@@ -425,26 +425,6 @@ class MainWindowUiSetupMixin:
 
         self.main_layout.addWidget(self.step_detail_label)
 
-        # 官网链接（覆盖在状态栏左侧）
-
-        self.qq_link_label = QLabel(self.step_detail_label)
-
-        self.qq_link_label.setText('<a href="https://github.com/wuzhijing88/LCA" style="color: #1E90FF; text-decoration: none;">点击打开开源地址</a>')
-
-        self.qq_link_label.setTextFormat(Qt.TextFormat.RichText)
-
-        self.qq_link_label.setCursor(Qt.CursorShape.PointingHandCursor)
-
-        self.qq_link_label.setFont(self.step_detail_label.font())
-
-        self.qq_link_label.setStyleSheet("background: transparent; padding: 0px; margin: 0px;")
-
-        self.qq_link_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-
-        self.qq_link_label.adjustSize()
-
-        self.qq_link_label.linkActivated.connect(self._open_official_website)
-
         font = self.step_detail_label.font()
 
         font.setPointSize(9)

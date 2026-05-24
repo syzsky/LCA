@@ -2,7 +2,7 @@
   "metadata": {
     "name": "传奇2自动挂机(等级分层选图)",
     "description": "自动检测角色等级→按等级选择对应地图进入→挂机循环(回收/买药/A*寻怪)",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "author": "Hermes",
     "engine_version": "1.0.0"
   },

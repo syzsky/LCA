@@ -3,311 +3,187 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手动选图 - 动画演示</title>
+<title>手动选图 - 下拉菜单演示</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0f172a;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-  }
-  .container {
-    width: 800px;
-    background: #1e293b;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
+  body { background: #0f172a; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .container { width: 750px; background: #1e293b; border-radius: 16px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
   h1 { color: #f1f5f9; font-size: 20px; text-align: center; }
   .sub { color: #64748b; font-size: 12px; text-align: center; margin: 4px 0 20px; }
-  .play-btn {
-    display: block; margin: 0 auto 20px;
-    background: #3b82f6; color: #fff; border: none;
-    border-radius: 8px; padding: 8px 32px; font-size: 14px; cursor: pointer;
-  }
-  .play-btn:hover { background: #2563eb; }
 
-  .lca-win {
-    background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;
-  }
-  .titlebar {
-    background: #1e293b; padding: 8px 14px; display: flex; align-items: center;
-    border-bottom: 1px solid #334155;
-  }
+  .lca-win { background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden; }
+  .titlebar { background: #1e293b; padding: 8px 14px; display: flex; align-items: center; border-bottom: 1px solid #334155; }
   .dots { display: flex; gap: 6px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .dot.r { background: #ef4444; }
-  .dot.y { background: #eab308; }
-  .dot.g { background: #22c55e; }
-  .win-title { color: #94a3b8; font-size: 12px; margin-left: 12px; flex: 1; }
+  .r { background: #ef4444; }
+  .y { background: #eab308; }
+  .g { background: #22c55e; }
+  .win-title { color: #94a3b8; font-size: 12px; margin-left: 12px; }
 
-  .content { padding: 16px; display: flex; gap: 12px; min-height: 350px; }
+  .content { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 
-  .sidebar { width: 130px; background: #1e293b; border-radius: 6px; border: 1px solid #2a3a5a; padding: 8px; }
-  .sb-item {
-    padding: 5px 8px; border-radius: 4px; font-size: 10px; color: #64748b;
-    margin-bottom: 3px; transition: all 0.3s;
-  }
-  .sb-item.active { background: #3b82f6; color: #fff; }
-  .sb-item.done { background: #22c55e33; color: #22c55e; }
-
-  .canvas {
-    flex: 1; background: #1e293b; border-radius: 6px; border: 1px solid #2a3a5a;
-    padding: 10px; display: flex; flex-direction: column; gap: 6px;
-  }
-
+  .card-row { display: flex; align-items: center; gap: 10px; }
   .card {
-    padding: 8px 12px; border-radius: 6px; border: 1px solid #334155;
-    background: #0f172a; display: flex; align-items: center; gap: 8px;
-    transition: all 0.4s;
+    background: #0f172a; border: 1px solid #334155; border-radius: 6px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex: 1;
   }
-  .card .icon {
-    width: 24px; height: 24px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; flex-shrink: 0;
+  .card .icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .card .name { color: #e2e8f0; font-size: 12px; font-weight: 600; }
+  .arrow { color: #475569; font-size: 18px; padding: 0 4px; }
+  .card-start .icon { background: #3b82f633; color: #3b82f6; }
+  .card-image .icon { background: #22c55e33; color: #22c55e; }
+
+  .card-select {
+    border: 2px solid #eab308;
+    background: #0f172a;
   }
-  .card .info { flex: 1; }
-  .card .info .name { color: #e2e8f0; font-size: 11px; font-weight: 600; }
-  .card .info .desc { color: #64748b; font-size: 10px; margin-top: 1px; }
-  .card .tag {
-    font-size: 9px; padding: 2px 8px; border-radius: 10px; flex-shrink: 0;
+  .card-select .icon { background: #eab30833; color: #eab308; }
+  .card-select .name { color: #eab308; }
+  .card-select .badge {
+    background: #eab30822; color: #eab308;
+    font-size: 9px; padding: 2px 8px; border-radius: 10px;
+    border: 1px solid #eab30844;
   }
-  .card .tag.wait { background: #334155; color: #64748b; }
-  .card .tag.run { background: #3b82f633; color: #60a5fa; animation: pulse 0.8s infinite; }
-  .card .tag.ok { background: #22c55e33; color: #22c55e; }
 
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-  .card-s .icon { background: #3b82f633; color: #3b82f6; }
-  .card-d .icon { background: #a855f733; color: #a855f7; }
-  .card-i .icon { background: #22c55e33; color: #22c55e; }
-  .card-k .icon { background: #eab30833; color: #eab308; }
-  .card-c .icon { background: #ef444433; color: #ef4444; }
-
-  .arrow { text-align: center; color: #475569; font-size: 14px; line-height: 0.8; }
-
-  /* Selection dialog popup */
-  .sel-dialog {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    width: 180px; background: #1e293b; border: 1px solid #3b82f6;
-    border-radius: 8px; padding: 12px; opacity: 0; transition: opacity 0.4s;
-    z-index: 10;
+  .dropdown {
+    margin-top: 8px;
+    margin-left: 42px;
+    width: 280px;
+    background: #1e293b;
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
+    overflow: hidden;
   }
-  .sel-dialog.show { opacity: 1; }
-  .sel-dialog .sel-title { color: #f1f5f9; font-size: 11px; font-weight: 600; margin-bottom: 8px; text-align: center; }
-  .sel-item {
-    padding: 6px 10px; border-radius: 4px; font-size: 11px; color: #94a3b8;
-    cursor: pointer; margin-bottom: 3px; border: 1px solid #334155;
+  .dropdown .header {
+    padding: 8px 12px;
+    background: #3b82f622;
+    color: #93c5fd;
+    font-size: 11px;
+    font-weight: 600;
+    border-bottom: 1px solid #3b82f644;
+  }
+  .dropdown .item {
+    padding: 8px 12px;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #334155;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .sel-item:hover { border-color: #3b82f6; background: #3b82f622; }
-  .sel-item.picked { background: #22c55e33; border-color: #22c55e; color: #22c55e; }
-  .sel-item .emoji { margin-right: 4px; }
+  .dropdown .item:hover { background: #3b82f622; color: #e2e8f0; }
+  .dropdown .item.selected { background: #22c55e33; color: #22c55e; }
+  .dropdown .item .emoji { font-size: 14px; }
+  .dropdown .item .detail { color: #64748b; font-size: 10px; margin-left: auto; }
+  .dropdown .item .check { margin-left: auto; color: #22c55e; }
 
-  .status-bar {
-    background: #0a1520; border-top: 1px solid #1e293b;
-    padding: 8px 16px; display: flex; align-items: center;
-  }
-  .status-bar .step { color: #94a3b8; font-size: 11px; }
-  .status-bar .step .hl { color: #facc15; }
-
-  .flow-log {
-    margin-top: 16px; padding: 12px; background: #0f172a;
-    border-radius: 8px; border: 1px solid #334155; display: none;
-  }
-  .flow-log.show { display: block; }
-  .fl {
-    display: flex; gap: 8px; padding: 3px 0; font-size: 11px; color: #64748b;
-    opacity: 0; transition: all 0.3s;
-  }
-  .fl.show { opacity: 1; }
-  .fl .n {
-    width: 18px; height: 18px; border-radius: 50%; background: #334155;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; color: #fff; flex-shrink: 0;
-  }
+  .flow-log { margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
+  .fl { display: flex; gap: 8px; padding: 4px 0; font-size: 11px; color: #64748b; }
+  .fl .n { width: 18px; height: 18px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; flex-shrink: 0; }
   .fl .n.ok { background: #22c55e; }
-  .fl .n.warn { border: 1px dashed #eab308; background: transparent; color: #eab308; }
 
-  .map-list {
-    margin-top: 12px; padding: 10px 14px; background: #0f172a;
-    border-radius: 8px; border: 1px solid #334155;
-  }
-  .map-list .ml-title { color: #f1f5f9; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
-  .map-list .ml-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .map-list .ml-item {
-    padding: 4px 12px; border-radius: 4px; font-size: 11px;
-    border: 1px solid #334155; color: #94a3b8;
-  }
-  .map-list .ml-item.low { border-color: #22c55e44; color: #22c55e; }
-  .map-list .ml-item.mid { border-color: #eab30844; color: #eab308; }
-  .map-list .ml-item.high { border-color: #ef444444; color: #ef4444; }
+  .map-list { margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
+  .map-list .title { color: #f1f5f9; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .map-list .row { display: flex; gap: 10px; }
+  .map-list .item { padding: 6px 14px; border-radius: 6px; font-size: 12px; border: 1px solid #334155; color: #94a3b8; }
+  .map-list .item.low { border-color: #22c55e44; color: #22c55e; }
+  .map-list .item.mid { border-color: #eab30844; color: #eab308; }
+  .map-list .item.high { border-color: #ef444444; color: #ef4444; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🎯 手动选图 — 动画演示</h1>
-  <p class="sub">在变量池设置 target_map → 自动跳转到对应地图路径</p>
-  <button class="play-btn" onclick="playAnim()" id="playBtn">▶ 播放演示</button>
+  <h1>🎯 手动选图 — 下拉菜单</h1>
+  <p class="sub">新增"地图选择"任务类型，直接在下拉菜单选图</p>
 
   <div class="lca-win">
     <div class="titlebar">
       <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-      <div class="win-title">LCA - [传奇2] 自动挂机 (手动选图 v3.0)</div>
+      <div class="win-title">LCA 工作流编辑 - 传奇2自动挂机 (v3.1)</div>
     </div>
-
     <div class="content">
-      <div class="sidebar">
-        <div class="sb-item" id="sb1">绑定</div>
-        <div class="sb-item" id="sb2">走到NPC</div>
-        <div class="sb-item" id="sb3" style="border-left:3px solid #eab308;">选图 ⭐</div>
-        <div class="sb-item" id="sb4">找NPC</div>
-        <div class="sb-item" id="sb5">进图</div>
-        <div class="sb-item" id="sb6">F5挂机</div>
+      <!-- Step flow -->
+      <div class="card-row">
+        <div class="card card-start" style="max-width:180px;"><div class="icon">🏁</div><div class="name">挂机起点</div></div>
       </div>
 
-      <div class="canvas" style="position:relative;">
-        <!-- Card sequence as they appear -->
-        <div class="card card-s" id="c1">
-          <div class="icon">✅</div>
-          <div class="info"><div class="name">窗口绑定验证通过</div><div class="desc">已检测到盟重省</div></div>
-          <div class="tag ok" id="t1">✅ 完成</div>
-        </div>
-        <div class="arrow">↓</div>
+      <div class="card-row">
+        <div class="card card-image" style="max-width:220px;"><div class="icon">🔍</div><div class="name">验证窗口绑定(盟重省)</div></div>
+        <div class="arrow">→</div>
+        <div class="card card-image" style="max-width:120px;"><div class="icon">➡️</div><div class="name" style="font-size:10px;">走到NPC位置</div></div>
+      </div>
 
-        <div class="card card-k" id="c2">
-          <div class="icon">➡️</div>
-          <div class="info"><div class="name">走到NPC位置</div><div class="desc">右→下→微调</div></div>
-          <div class="tag ok" id="t2">✅ 完成</div>
-        </div>
-        <div class="arrow">↓</div>
-
-        <div class="card card-c" id="c3" style="border-color:#eab308;">
-          <div class="icon" style="background:#eab30833;color:#eab308;">👆</div>
-          <div class="info"><div class="name" style="color:#eab308;">⭐ 手动选择地图</div><div class="desc">选择要进入的挂机地图</div></div>
-          <div class="tag wait" id="t3">等待选择</div>
-        </div>
-
-        <!-- Selection dialog popup -->
-        <div class="sel-dialog" id="selDialog">
-          <div class="sel-title">🎯 选择挂机地图</div>
-          <div class="sel-item" onclick="pickMap('低级图')"><span class="emoji">🟢</span> 低级图 (1~39级)</div>
-          <div class="sel-item" onclick="pickMap('中级图')"><span class="emoji">🟡</span> 中级图 (40~54级)</div>
-          <div class="sel-item" onclick="pickMap('高级图')"><span class="emoji">🔴</span> 高级图 (55级以上)</div>
-        </div>
-
-        <div class="arrow">↓</div>
-
-        <div class="card card-i" id="c4">
-          <div class="icon">🔍</div>
-          <div class="info"><div class="name" id="pathName">等待选择地图...</div><div class="desc" id="pathDesc">将前往对应的NPC传送员</div></div>
-          <div class="tag wait" id="t4">等待</div>
+      <!-- Selection card (highlighted) -->
+      <div class="card-row">
+        <div class="card card-select" style="max-width:260px;">
+          <div class="icon">👆</div>
+          <div class="name">选择挂机地图 <span class="badge">NEW</span></div>
         </div>
       </div>
-    </div>
 
-    <div class="status-bar">
-      <div class="step" id="stepText">等待启动...</div>
-    </div>
-  </div>
+      <!-- Dropdown menu (simulated) -->
+      <div class="dropdown" id="dd">
+        <div class="header">🎯 选择要进入的挂机地图</div>
+        <div class="item" onclick="selectMap('低级图',this)">
+          <span class="emoji">🟢</span> 低级图
+          <span class="detail">1~39级</span>
+          <span class="check" id="ck1"></span>
+        </div>
+        <div class="item" onclick="selectMap('中级图',this)">
+          <span class="emoji">🟡</span> 中级图
+          <span class="detail">40~54级</span>
+          <span class="check" id="ck2"></span>
+        </div>
+        <div class="item" onclick="selectMap('高级图',this)">
+          <span class="emoji">🔴</span> 高级图
+          <span class="detail">55级以上</span>
+          <span class="check" id="ck3"></span>
+        </div>
+      </div>
 
-  <div class="flow-log" id="flowLog">
-    <div class="fl" id="fl1"><div class="n ok">✓</div><div class="text">窗口绑定验证通过 ✅</div></div>
-    <div class="fl" id="fl2"><div class="n ok">✓</div><div class="text">移动到NPC位置完成</div></div>
-    <div class="fl" id="fl3"><div class="n" style="background:#eab308;">③</div><div class="text"><strong style="color:#eab308;">等待用户选择地图...</strong></div></div>
-    <div class="fl" id="fl4"><div class="n ok">✓</div><div class="text">已选择: <strong id="selectedMapText" style="color:#22c55e;">高级图</strong></div></div>
-    <div class="fl" id="fl5"><div class="n">→</div><div class="text">跳转到对应路径 → 找NPC → 进图 → F5挂机</div></div>
+      <!-- Path indicator -->
+      <div id="pathIndicator" style="margin-top:4px; padding:8px 14px; border-radius:6px; border:1px dashed #334155; display:none; font-size:12px; color:#94a3b8; text-align:center;"></div>
+    </div>
   </div>
 
   <div class="map-list">
-    <div class="ml-title">📋 可选择的地图列表（设置 target_map 变量）</div>
-    <div class="ml-row">
-      <div class="ml-item low">🟢 低级图 (1~39级)</div>
-      <div class="ml-item mid">🟡 中级图 (40~54级)</div>
-      <div class="ml-item high">🔴 高级图 (55级以上)</div>
+    <div class="title">📋 地图列表（点击上方菜单选择）</div>
+    <div class="row">
+      <div class="item low">🟢 低级图 (1~39级)</div>
+      <div class="item mid">🟡 中级图 (40~54级)</div>
+      <div class="item high">🔴 高级图 (55级以上)</div>
     </div>
-    <div style="color:#64748b; font-size:10px; margin-top:6px;">
-      ⚡ 在 LCA 的 <strong style="color:#f1f5f9;">变量池</strong> 中添加变量 <strong style="color:#facc15;">target_map</strong>，值设为以上任意一个
-    </div>
+  </div>
+
+  <div class="flow-log" id="flowLog" style="display:none;">
+    <div class="fl"><div class="n ok">✓</div><div class="text" id="resultText">已选择：低级图</div></div>
+    <div class="fl"><div class="n">→</div><div class="text">target_map 已设定 → 自动跳转到对应路径找NPC进图</div></div>
   </div>
 </div>
 
 <script>
-let picked = false;
-
-function pickMap(name) {
-  if (picked) return;
-  picked = true;
-
-  document.querySelectorAll('.sel-item').forEach(el => {
-    if (el.textContent.includes(name)) {
-      el.classList.add('picked');
-    }
+function selectMap(name, el) {
+  document.querySelectorAll('.dropdown .item').forEach(i => {
+    i.classList.remove('selected');
+    const ck = i.querySelector('.check');
+    if (ck) ck.textContent = '';
   });
+  el.classList.add('selected');
+  const ck = el.querySelector('.check');
+  if (ck) ck.textContent = '✓';
 
-  setTimeout(() => continueFlow(name), 600);
-}
-
-function playAnim() {
-  const btn = document.getElementById('playBtn');
-  if (picked) { location.reload(); return; }
-
-  btn.textContent = '⏳ 等待选择...';
-  btn.style.opacity = '0.6';
-
-  document.getElementById('selDialog').classList.add('show');
-  document.getElementById('t3').className = 'tag run';
-  document.getElementById('t3').textContent = '🖱️ 请点击选择';
-  document.getElementById('stepText').innerHTML = '👆 <strong style="color:#eab308;">请选择要挂机的地图</strong>';
-  document.getElementById('fl3').classList.add('show');
-  document.getElementById('flowLog').classList.add('show');
-  document.getElementById('fl1').classList.add('show');
-  document.getElementById('fl2').classList.add('show');
-
-  document.getElementById('c3').style.borderColor = '#eab308';
-}
-
-function continueFlow(name) {
   const emoji = name === '低级图' ? '🟢' : name === '中级图' ? '🟡' : '🔴';
   const level = name === '低级图' ? '1~39级' : name === '中级图' ? '40~54级' : '55级以上';
 
-  document.getElementById('t3').className = 'tag ok';
-  document.getElementById('t3').textContent = '✅ 已选择';
-  document.getElementById('t4').className = 'tag run';
-  document.getElementById('t4').textContent = '🚀 前往中';
-  document.getElementById('pathName').textContent = `${emoji} ${name} (${level})`;
-  document.getElementById('pathDesc').textContent = `正在前往${name}的NPC传送员...`;
-  document.getElementById('selectedMapText').textContent = `${emoji} ${name}`;
-  document.getElementById('stepText').innerHTML = `🚀 <strong style="color:#22c55e;">已选择${name}！前往找NPC...</strong>`;
-  document.getElementById('fl4').classList.add('show');
+  const pathEl = document.getElementById('pathIndicator');
+  pathEl.style.display = 'block';
+  pathEl.innerHTML = `${emoji} <strong style="color:#22c55e;">${name}</strong> (${level}) — 已选择！target_map 已设为 <strong style="color:#facc15;">${name}</strong>`;
 
-  document.querySelectorAll('.sel-item').forEach(el => {
-    if (!el.textContent.includes(name)) {
-      el.style.opacity = '0.3';
-    }
-  });
-
-  setTimeout(() => {
-    document.getElementById('t4').className = 'tag ok';
-    document.getElementById('t4').textContent = '✅ 已找到';
-    document.getElementById('c4').style.borderColor = '#22c55e';
-    document.getElementById('sb4').className = 'sb-item done';
-    document.getElementById('sb5').className = 'sb-item active';
-    document.getElementById('stepText').innerHTML = `✅ 找到NPC → 进入${name} → F5挂机`;
-    document.getElementById('fl5').classList.add('show');
-
-    setTimeout(() => {
-      document.getElementById('sb5').className = 'sb-item done';
-      document.getElementById('sb6').className = 'sb-item active';
-      const btn = document.getElementById('playBtn');
-      btn.textContent = '🔄 重播';
-      btn.style.opacity = '1';
-    }, 1500);
-  }, 2000);
+  const log = document.getElementById('flowLog');
+  log.style.display = 'block';
+  document.getElementById('resultText').innerHTML = `✓ 已选择：${emoji} ${name}`;
 }
 </script>
 </body>

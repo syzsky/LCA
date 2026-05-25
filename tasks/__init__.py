@@ -69,7 +69,8 @@ _PRIMARY_TASK_MODULE_PATHS = {
     "变量比较": "tasks.variable_compare",
     "录制回放": "tasks.record_replay_task",
     "附加条件": "tasks.watchdog_monitor",
-    "子工作流": "tasks.sub_workflow_task",
+"子工作流": "tasks.sub_workflow_task",
+    "地图选择": "tasks.map_selector_task",
 }
 
 PRIMARY_TASK_MODULES = LazyTaskModuleDict(_PRIMARY_TASK_MODULE_PATHS)

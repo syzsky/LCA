@@ -120,6 +120,20 @@
   .fl .n.ok { background: #22c55e; }
   .fl .n.sel { background: #f59e0b; color: #000; }
   .fl .n.default { background: #6366f1; color: #fff; }
+  .fl .n.info { background: #0ea5e9; color: #fff; }
+
+  .naming-rules {
+    margin-top: 14px; padding: 12px 16px; background: #0f172a;
+    border-radius: 8px; border: 1px solid #334155;
+  }
+  .naming-rules .title { color: #f1f5f9; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .naming-rules table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .naming-rules th { color: #94a3b8; text-align: left; padding: 4px 8px; border-bottom: 1px solid #334155; }
+  .naming-rules td { color: #cbd5e1; padding: 4px 8px; border-bottom: 1px solid #2a3a5a; }
+  .naming-rules td.code { color: #facc15; font-family: monospace; }
+  .naming-rules td.note { color: #64748b; font-size: 10px; }
+  .naming-rules td .done { color: #22c55e; }
+  .naming-rules td .wait { color: #eab308; }
 
   .result-banner {
     margin-top: 12px; padding: 10px 16px; border-radius: 8px;
@@ -182,6 +196,19 @@
     <div class="big" id="bannerEmoji">🟡</div>
     <div style="color:#e2e8f0; margin-top:4px;">已选择 <strong id="bannerName" style="color:#22c55e;">石墓一层(猪洞)</strong></div>
     <div style="color:#64748b; font-size:11px; margin-top:2px;">target_map 已设为该地图名 → 继续执行后续步骤</div>
+  </div>
+
+  <div class="naming-rules">
+    <div class="title">📋 截图命名规则（放 images/templates/ 目录下）</div>
+    <table>
+      <tr><th>文件</th><th>说明</th><th>示例</th></tr>
+      <tr><td class="code">npc_传送员.png</td><td>NPC传送员截图 <span class="done">(所有地图共用)</span></td><td class="note">截NPC身体或名字</td></tr>
+      <tr><td class="code">btn_地图名.png</td><td>菜单中地图按钮 <span class="wait">(每图一张)</span></td><td class="note">btn_石墓一层.png, btn_祖玛寺庙七层.png</td></tr>
+      <tr><td class="code">entered_地图名.png</td><td>进图后确认 <span class="wait">(每图一张)</span></td><td class="note">entered_石墓一层.png, entered_祖玛寺庙七层.png</td></tr>
+    </table>
+    <div style="color:#64748b; font-size:10px; margin-top:6px;">
+      ⚡ 你先截 npc_传送员.png，再想进哪个图就截哪个图的按钮+确认图
+    </div>
   </div>
 </div>
 

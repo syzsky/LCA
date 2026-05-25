@@ -139,59 +139,7 @@ class MainWindowStatusMixin:
 
         """)
 
-    def _position_qq_link_label(self):
-
-        """将官网链接在状态栏内垂直居中定位"""
-
-        if not hasattr(self, 'step_detail_label'):
-
-            return
-
-        if not self.step_detail_label:
-
-            return
-
-        try:
-
-            content_rect = self.step_detail_label.contentsRect()
-
-            step_fm = self.step_detail_label.fontMetrics()
-
-            baseline = content_rect.center().y() + step_fm.ascent() - (step_fm.height() / 2.0)
-
-            if hasattr(self, 'qq_link_label') and self.qq_link_label:
-
-                self.qq_link_label.adjustSize()
-
-                qq_fm = self.qq_link_label.fontMetrics()
-
-                qq_y = int(round(baseline - qq_fm.ascent()))
-
-                qq_y_min = content_rect.y()
-
-                qq_y_max = content_rect.y() + max(0, content_rect.height() - self.qq_link_label.height())
-
-                if qq_y < qq_y_min:
-
-                    qq_y = qq_y_min
-
-                elif qq_y > qq_y_max:
-
-                    qq_y = qq_y_max
-
-                qq_x = content_rect.x() + 10
-
-                qq_max_x = content_rect.right() - self.qq_link_label.width()
-
-                if qq_x > qq_max_x:
-
-                    qq_x = max(content_rect.x(), qq_max_x)
-
-                self.qq_link_label.move(qq_x, qq_y)
-
-        except Exception:
-
-            pass
+    
 
     def update_status_bar_for_selection(self):
 
@@ -311,35 +259,17 @@ class MainWindowStatusMixin:
 
         self._set_step_detail_style(text_color=self._get_step_detail_text_color(step_details))
 
-        self._position_qq_link_label()
-
         self._step_detail_last_text = step_details
 
         self._step_detail_last_update_ts = time.monotonic()
 
     def eventFilter(self, obj, event):
 
-        from PySide6.QtCore import QEvent, QTimer
+        from PySide6.QtCore import QEvent
 
         if obj is getattr(self, 'step_detail_label', None):
 
-            if event.type() in (
-
-                QEvent.Type.Resize,
-
-                QEvent.Type.LayoutRequest,
-
-                QEvent.Type.FontChange,
-
-                QEvent.Type.StyleChange,
-
-                QEvent.Type.Polish,
-
-                QEvent.Type.Show,
-
-            ):
-
-                QTimer.singleShot(0, self._position_qq_link_label)
+            pass  # 移除开源链接定位
 
         return super().eventFilter(obj, event)
 

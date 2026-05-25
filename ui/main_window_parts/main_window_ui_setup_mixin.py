@@ -433,11 +433,7 @@ class MainWindowUiSetupMixin:
 
         self.step_detail_label.setFont(font)
 
-        if hasattr(self, 'qq_link_label'):
-
-            self.qq_link_label.setFont(font)
-
-        self._position_qq_link_label()
+        # 开源地址链接已移除
 
         self.step_detail_label.installEventFilter(self)
 

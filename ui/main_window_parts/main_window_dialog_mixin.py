@@ -379,13 +379,7 @@ class MainWindowDialogMixin:
 
                     pass
 
-    def _open_official_website(self, url: str = "https://github.com/wuzhijing88/LCA"):
-
-        """打开开源地址。"""
-
-        import webbrowser
-
-        webbrowser.open(url or "https://github.com/wuzhijing88/LCA")
+    
 
     def _on_control_center_closed(self):
 

@@ -389,15 +389,19 @@ class GlobalSettingsDialogWindowMixin:
 
             hwnd = window_info.get('hwnd', 0)
 
-            # 构建显示文本
+            role = window_info.get('role', '')
+
+            # 构建显示文本（带角色标签）
+
+            role_text = f" [{role}]" if role else ""
 
             if hwnd and hwnd != 0:
 
-                display_text = f"✓ {title} (句柄: {hwnd})"
+                display_text = f"✓ {title}{role_text} (句柄: {hwnd})"
 
             else:
 
-                display_text = f"✓ {title}"
+                display_text = f"✓ {title}{role_text}"
 
             self.bound_windows_combo.addItem(display_text)
 
@@ -479,9 +483,9 @@ class GlobalSettingsDialogWindowMixin:
 
                 return
 
-            # 添加窗口
+            # 添加窗口（使用当前选中的角色标签）
 
-            self._add_window_silently(original_title, window_hwnd)
+            self._add_window_silently(original_title, window_hwnd, role=getattr(self, "_pending_window_role", ""))
 
             self._save_bound_windows_config()
 
@@ -553,11 +557,27 @@ class GlobalSettingsDialogWindowMixin:
 
             return
 
+        # 获取当前选中的角色标签
+        selected_role = ""
+        if hasattr(self, 'window_role_combo') and self.window_role_combo.count() > 0:
+            role_text = self.window_role_combo.currentText()
+            if role_text and role_text != "自定义...":
+                selected_role = role_text
+            elif role_text == "自定义...":
+                # 弹出对话框让用户输入自定义角色名
+                from PySide6.QtWidgets import QInputDialog
+                custom_role, ok = QInputDialog.getText(self, "自定义角色标签", "请输入角色名称：")
+                if ok and custom_role.strip():
+                    selected_role = custom_role.strip()
+
+        # 存储待绑定窗口的角色标签
+        self._pending_window_role = selected_role
+
         try:
 
             from ui.selectors.window_picker import WindowPickerOverlay
 
-            logger.info("启动窗口选择工具")
+            logger.info(f"启动窗口选择工具，角色标签: {selected_role or '无'}")
             picker_binding_target = 'plugin' if binding_target == 'plugin' else self._current_window_binding_target()
 
             # 隐藏主窗口及其所有子窗口
@@ -688,7 +708,8 @@ class GlobalSettingsDialogWindowMixin:
 
             logger.info(f"选择了窗口: {title} (句柄: {hwnd})")
 
-            if self._update_bound_window_from_picker(title, hwnd):
+            pending_role = getattr(self, "_pending_window_role", "")
+            if self._update_bound_window_from_picker(title, hwnd, role=pending_role):
 
                 self._save_bound_windows_config()
 
@@ -726,7 +747,8 @@ class GlobalSettingsDialogWindowMixin:
 
             # 添加窗口到绑定列表
 
-            self._add_window_silently(title, hwnd)
+            pending_role = getattr(self, "_pending_window_role", "")
+            self._add_window_silently(title, hwnd, role=pending_role)
 
             self._save_bound_windows_config()
 
@@ -748,7 +770,10 @@ class GlobalSettingsDialogWindowMixin:
 
                 self._sync_parent_window_binding_preview()
 
-            logger.info(f"窗口绑定成功：{title}")
+            logger.info(f"窗口绑定成功：{title}, 角色: {pending_role}")
+
+            # 清除待绑定角色标签
+            self._pending_window_role = ""
 
             # 【新增】绑定成功后检查并调整分辨率
 

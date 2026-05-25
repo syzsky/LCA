@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class GlobalSettingsDialogWindowManageMixin:
 
-    def _build_bound_window_info(self, window_title: str, hwnd: int = 0):
+    def _build_bound_window_info(self, window_title: str, hwnd: int = 0, role: str = ""):
 
         new_window = {
 
@@ -18,6 +18,10 @@ class GlobalSettingsDialogWindowManageMixin:
             'enabled': True
 
         }
+
+        if role:
+
+            new_window['role'] = role
 
         if hwnd and hwnd != 0:
 
@@ -157,12 +161,13 @@ class GlobalSettingsDialogWindowManageMixin:
         self,
         window_title: str,
         hwnd: int = 0,
+        role: str = "",
         refresh_ui: bool = True,
         refresh_window_select: bool = False,
         sync_parent: bool = True,
     ):
 
-        new_window = self._build_bound_window_info(window_title, hwnd)
+        new_window = self._build_bound_window_info(window_title, hwnd, role)
         self.bound_windows.append(new_window)
 
         if refresh_ui:

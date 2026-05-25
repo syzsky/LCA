@@ -68,6 +68,16 @@ class GlobalSettingsDialogWindowTabMixin:
 
         self._window_list_loaded = False  # 标记窗口列表是否已加载
 
+        # 角色标签选择
+        role_select_label = QLabel("角色标签:")
+        role_select_label.setFixedWidth(65)
+
+        self.window_role_combo = QComboBox(self)
+        self.window_role_combo.setMinimumWidth(100)
+        self.window_role_combo.setMaximumWidth(150)
+        self.window_role_combo.addItems(["战士", "法师", "道士", "自定义..."])
+        self.window_role_combo.setToolTip("为绑定的窗口设置角色标签，用于多职业挂机区分")
+
         # 窗口选择工具按钮
 
         self.batch_add_button = QPushButton("绑定工具")
@@ -80,11 +90,15 @@ class GlobalSettingsDialogWindowTabMixin:
 
         window_select_layout.addWidget(self.window_select_combo, 1)
 
+        window_select_layout.addWidget(role_select_label)
+
+        window_select_layout.addWidget(self.window_role_combo)
+
         window_select_layout.addWidget(self.batch_add_button)
 
         window_settings_layout.addLayout(window_select_layout)
 
-        # 已绑定窗口下拉框
+        # 已绑定窗口列表（带角色标签显示）
 
         bound_windows_layout = QHBoxLayout()
 
@@ -98,7 +112,7 @@ class GlobalSettingsDialogWindowTabMixin:
 
         self.bound_windows_combo.setMaximumWidth(500)
 
-        self.bound_windows_combo.setToolTip("已绑定的窗口列表")
+        self.bound_windows_combo.setToolTip("已绑定的窗口列表（格式：窗口名 [角色标签]）")
 
         self.remove_window_button = QPushButton("移除选中")
 

@@ -296,6 +296,8 @@ class FloatingStatusWindow(QWidget):
         self._preview_timer.timeout.connect(self._capture_and_display)
         self._target_hwnd = None
         self._preview_freq = 1000
+        self._bound_windows = []  # 所有绑定窗口列表
+        self._active_window_index = 0  # 当前预览的窗口索引
 
         self._start_hotkey = "Num7"
         self._pause_hotkey = "F11"
@@ -734,6 +736,36 @@ class FloatingStatusWindow(QWidget):
         """设置目标窗口句柄"""
         self._target_hwnd = hwnd
 
+    def set_bound_windows(self, bound_windows: list):
+        """设置所有绑定窗口列表，用于多窗口预览"""
+        self._bound_windows = bound_windows or []
+        # 如果当前目标窗口不在列表中，切换到第一个
+        if self._target_hwnd:
+            found = False
+            for i, win in enumerate(self._bound_windows):
+                if win.get('hwnd') == self._target_hwnd:
+                    found = True
+                    break
+            if not found and self._bound_windows:
+                self._target_hwnd = self._bound_windows[0].get('hwnd', None)
+                self._active_window_index = 0
+
+    def get_active_window_info(self):
+        """获取当前活跃窗口信息"""
+        if 0 <= self._active_window_index < len(self._bound_windows):
+            return self._bound_windows[self._active_window_index]
+        return None
+
+    def switch_to_window(self, index: int):
+        """切换到指定索引的窗口预览"""
+        if 0 <= index < len(self._bound_windows):
+            self._active_window_index = index
+            win = self._bound_windows[index]
+            self._target_hwnd = win.get('hwnd', None)
+            # 更新预览面板标题显示
+            if self._preview_panel.isVisible():
+                self._update_preview_header()
+
     def _toggle_live_preview(self):
         """开/关实时画面预览"""
         if self._live_preview_enabled:
@@ -752,7 +784,10 @@ class FloatingStatusWindow(QWidget):
             self._preview_timer.setInterval(self._preview_freq)
 
     def _capture_and_display(self):
-        """定时触发：截图并显示"""
+        """定时触发：截图并显示（当前活跃窗口）"""
+        if not self._bound_windows:
+            self._preview_label.setText("未绑定窗口")
+            return
         if self._target_hwnd is None or self._target_hwnd <= 0:
             self._preview_label.setText("未绑定窗口")
             return
@@ -766,10 +801,31 @@ class FloatingStatusWindow(QWidget):
             pixmap = self._numpy_to_pixmap(frame, max_width=360)
             if pixmap is not None:
                 self._preview_label.setPixmap(pixmap)
+                # 更新窗口标签
+                self._update_preview_header()
             else:
                 self._preview_label.setText("转换失败")
         except Exception as e:
             logger.warning(f"实时画面截图失败: {e}")
+
+    def _update_preview_header(self):
+        """更新预览面板头部显示（窗口名+角色标签）"""
+        win = self.get_active_window_info()
+        if not win:
+            return
+        title = win.get('title', '未知窗口')
+        role = win.get('role', '')
+        role_text = f" [{role}]" if role else ""
+        hwnd = win.get('hwnd', 0)
+        if hwnd and hwnd != 0:
+            label_text = f"🖥️ {title}{role_text} (句柄: {hwnd})"
+        else:
+            label_text = f"🖥️ {title}{role_text}"
+        # 找到预览面板的header label并更新
+        for child in self._preview_panel.findChildren(QLabel):
+            if child.objectName() == "floatingPreviewLabel":
+                child.setText(label_text)
+                break
 
     def _numpy_to_pixmap(self, frame, max_width=360):
         """np.ndarray → QPixmap 转换"""
@@ -802,6 +858,7 @@ class FloatingStatusWindow(QWidget):
         self._btn_preview.setToolTip("开启实时画面")
         self._preview_label.clear()
         self._preview_label.setText("暂无画面")
+        self._update_preview_header()
 
     def reset(self):
         self._is_running = False

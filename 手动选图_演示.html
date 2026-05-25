@@ -3,187 +3,287 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手动选图 - 下拉菜单演示</title>
+<title>手动选图 - 动态演示</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0f172a; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-  .container { width: 750px; background: #1e293b; border-radius: 16px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .container { width: 780px; background: #1e293b; border-radius: 16px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
   h1 { color: #f1f5f9; font-size: 20px; text-align: center; }
-  .sub { color: #64748b; font-size: 12px; text-align: center; margin: 4px 0 20px; }
+  .sub { color: #64748b; font-size: 12px; text-align: center; margin: 4px 0 16px; }
+
+  .play-btn {
+    display: block; margin: 0 auto 16px;
+    background: #3b82f6; color: #fff; border: none; border-radius: 8px;
+    padding: 8px 32px; font-size: 14px; cursor: pointer; transition: background 0.2s;
+  }
+  .play-btn:hover { background: #2563eb; }
 
   .lca-win { background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden; }
   .titlebar { background: #1e293b; padding: 8px 14px; display: flex; align-items: center; border-bottom: 1px solid #334155; }
   .dots { display: flex; gap: 6px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .r { background: #ef4444; }
-  .y { background: #eab308; }
-  .g { background: #22c55e; }
+  .r { background: #ef4444; } .y { background: #eab308; } .g { background: #22c55e; }
   .win-title { color: #94a3b8; font-size: 12px; margin-left: 12px; }
 
-  .content { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 
-  .card-row { display: flex; align-items: center; gap: 10px; }
+  .card-row { display: flex; align-items: center; gap: 8px; }
   .card {
     background: #0f172a; border: 1px solid #334155; border-radius: 6px;
-    padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex: 1;
+    padding: 8px 12px; display: flex; align-items: center; gap: 6px; 
+    transition: all 0.4s; min-width: 160px;
   }
-  .card .icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
-  .card .name { color: #e2e8f0; font-size: 12px; font-weight: 600; }
-  .arrow { color: #475569; font-size: 18px; padding: 0 4px; }
-  .card-start .icon { background: #3b82f633; color: #3b82f6; }
-  .card-image .icon { background: #22c55e33; color: #22c55e; }
+  .card .icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+  .card .name { color: #e2e8f0; font-size: 11px; font-weight: 600; }
+  .card .tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 8px; margin-left: auto;
+  }
+  .tag.wait { background: #334155; color: #64748b; }
+  .tag.run { background: #3b82f633; color: #60a5fa; animation: pulse 0.8s infinite; }
+  .tag.ok { background: #22c55e33; color: #22c55e; }
+  .tag.done { background: #6366f133; color: #818cf8; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .arrow { color: #475569; font-size: 14px; padding: 0 2px; }
 
-  .card-select {
-    border: 2px solid #eab308;
-    background: #0f172a;
-  }
-  .card-select .icon { background: #eab30833; color: #eab308; }
-  .card-select .name { color: #eab308; }
-  .card-select .badge {
-    background: #eab30822; color: #eab308;
-    font-size: 9px; padding: 2px 8px; border-radius: 10px;
-    border: 1px solid #eab30844;
-  }
+  .card-s .icon { background: #3b82f633; color: #3b82f6; }
+  .card-i .icon { background: #22c55e33; color: #22c55e; }
+  .card-k .icon { background: #eab30833; color: #eab308; }
+  .card-select .icon { background: #f59e0b33; color: #f59e0b; }
+  .card-select { border-color: #f59e0b; }
+  .card-select .name { color: #f59e0b; }
+  .card-select .badge { background: #f59e0b22; color: #f59e0b; font-size: 8px; padding: 1px 6px; border-radius: 8px; border: 1px solid #f59e0b44; }
 
-  .dropdown {
-    margin-top: 8px;
-    margin-left: 42px;
-    width: 280px;
-    background: #1e293b;
-    border: 1px solid #3b82f6;
-    border-radius: 6px;
+  /* Dropdown */
+  .dropdown-wrap {
+    position: relative;
+    margin-left: 44px;
+    max-height: 0;
     overflow: hidden;
+    transition: max-height 0.6s ease;
   }
-  .dropdown .header {
-    padding: 8px 12px;
-    background: #3b82f622;
-    color: #93c5fd;
-    font-size: 11px;
-    font-weight: 600;
-    border-bottom: 1px solid #3b82f644;
+  .dropdown-wrap.open { max-height: 600px; }
+  .dropdown {
+    width: 380px; background: #1e293b; border: 1px solid #f59e0b;
+    border-radius: 8px; overflow: hidden; margin-top: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   }
-  .dropdown .item {
-    padding: 8px 12px;
-    color: #94a3b8;
-    font-size: 12px;
-    cursor: pointer;
+  .dd-header {
+    padding: 8px 12px; background: #f59e0b22; color: #fbbf24;
+    font-size: 11px; font-weight: 600; border-bottom: 1px solid #f59e0b44;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dd-search {
+    padding: 6px 10px; background: #0f172a; border-bottom: 1px solid #334155;
+  }
+  .dd-search input {
+    width: 100%; background: #1e293b; border: 1px solid #334155;
+    border-radius: 4px; padding: 4px 8px; color: #e2e8f0; font-size: 11px;
+    outline: none;
+  }
+  .dd-search input:focus { border-color: #3b82f6; }
+  .dd-list { max-height: 260px; overflow-y: auto; }
+  .dd-group-label {
+    padding: 4px 10px; font-size: 9px; color: #64748b;
+    background: #0f172a; text-transform: uppercase; letter-spacing: 1px;
     border-bottom: 1px solid #334155;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
   }
-  .dropdown .item:hover { background: #3b82f622; color: #e2e8f0; }
-  .dropdown .item.selected { background: #22c55e33; color: #22c55e; }
-  .dropdown .item .emoji { font-size: 14px; }
-  .dropdown .item .detail { color: #64748b; font-size: 10px; margin-left: auto; }
-  .dropdown .item .check { margin-left: auto; color: #22c55e; }
+  .dd-item {
+    padding: 5px 10px; font-size: 11px; color: #94a3b8;
+    cursor: pointer; border-bottom: 1px solid #2a3a5a;
+    display: flex; align-items: center; gap: 5px;
+    transition: all 0.15s;
+  }
+  .dd-item:hover { background: #3b82f622; color: #e2e8f0; }
+  .dd-item.picked { background: #22c55e22; color: #22c55e; border-color: #22c55e44; }
+  .dd-item .emoji { font-size: 12px; }
+  .dd-item .check { margin-left: auto; color: #22c55e; display: none; }
+  .dd-item.picked .check { display: inline; }
 
-  .flow-log { margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
-  .fl { display: flex; gap: 8px; padding: 4px 0; font-size: 11px; color: #64748b; }
-  .fl .n { width: 18px; height: 18px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; flex-shrink: 0; }
+  .status-bar {
+    background: #0a1520; border-top: 1px solid #1e293b;
+    padding: 8px 16px; min-height: 34px;
+  }
+  .status-text { color: #94a3b8; font-size: 11px; transition: all 0.3s; }
+
+  .flow-log { margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; display: none; }
+  .flow-log.show { display: block; }
+  .fl {
+    display: flex; gap: 8px; padding: 3px 0; font-size: 11px; color: #64748b;
+    opacity: 0; transition: all 0.3s;
+  }
+  .fl.show { opacity: 1; }
+  .fl .n {
+    width: 18px; height: 18px; border-radius: 50%; background: #334155;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #fff; flex-shrink: 0;
+  }
   .fl .n.ok { background: #22c55e; }
+  .fl .n.sel { background: #f59e0b; color: #000; }
 
-  .map-list { margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
-  .map-list .title { color: #f1f5f9; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
-  .map-list .row { display: flex; gap: 10px; }
-  .map-list .item { padding: 6px 14px; border-radius: 6px; font-size: 12px; border: 1px solid #334155; color: #94a3b8; }
-  .map-list .item.low { border-color: #22c55e44; color: #22c55e; }
-  .map-list .item.mid { border-color: #eab30844; color: #eab308; }
-  .map-list .item.high { border-color: #ef444444; color: #ef4444; }
+  .result-banner {
+    margin-top: 12px; padding: 10px 16px; border-radius: 8px;
+    display: none; font-size: 12px; text-align: center;
+  }
+  .result-banner.show { display: block; border: 1px solid #22c55e44; background: #22c55e11; }
+  .result-banner .big { font-size: 18px; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🎯 手动选图 — 下拉菜单</h1>
-  <p class="sub">新增"地图选择"任务类型，直接在下拉菜单选图</p>
+  <h1>🎯 手动选图 — 动态演示</h1>
+  <p class="sub">新增"地图选择"任务类型 · 50+地图下拉菜单</p>
+  <button class="play-btn" onclick="playAnim()" id="playBtn">▶ 播放演示</button>
 
   <div class="lca-win">
     <div class="titlebar">
       <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-      <div class="win-title">LCA 工作流编辑 - 传奇2自动挂机 (v3.1)</div>
+      <div class="win-title">LCA 工作流 - 传奇2自动挂机 (v3.1)</div>
     </div>
+
     <div class="content">
-      <!-- Step flow -->
       <div class="card-row">
-        <div class="card card-start" style="max-width:180px;"><div class="icon">🏁</div><div class="name">挂机起点</div></div>
-      </div>
-
-      <div class="card-row">
-        <div class="card card-image" style="max-width:220px;"><div class="icon">🔍</div><div class="name">验证窗口绑定(盟重省)</div></div>
+        <div class="card card-s" id="c1"><div class="icon">🏁</div><div class="name">挂机起点</div><div class="tag wait" id="t1">等待</div></div>
         <div class="arrow">→</div>
-        <div class="card card-image" style="max-width:120px;"><div class="icon">➡️</div><div class="name" style="font-size:10px;">走到NPC位置</div></div>
+        <div class="card card-i" id="c2"><div class="icon">🔍</div><div class="name">验证窗口绑定</div><div class="tag wait" id="t2">等待</div></div>
+        <div class="arrow">→</div>
+        <div class="card card-k" id="c3"><div class="icon">➡️</div><div class="name">走到NPC位置</div><div class="tag wait" id="t3">等待</div></div>
       </div>
 
-      <!-- Selection card (highlighted) -->
       <div class="card-row">
-        <div class="card card-select" style="max-width:260px;">
+        <div class="card card-select" id="c4" style="min-width:240px;">
           <div class="icon">👆</div>
           <div class="name">选择挂机地图 <span class="badge">NEW</span></div>
+          <div class="tag wait" id="t4">等待</div>
         </div>
       </div>
 
-      <!-- Dropdown menu (simulated) -->
-      <div class="dropdown" id="dd">
-        <div class="header">🎯 选择要进入的挂机地图</div>
-        <div class="item" onclick="selectMap('低级图',this)">
-          <span class="emoji">🟢</span> 低级图
-          <span class="detail">1~39级</span>
-          <span class="check" id="ck1"></span>
-        </div>
-        <div class="item" onclick="selectMap('中级图',this)">
-          <span class="emoji">🟡</span> 中级图
-          <span class="detail">40~54级</span>
-          <span class="check" id="ck2"></span>
-        </div>
-        <div class="item" onclick="selectMap('高级图',this)">
-          <span class="emoji">🔴</span> 高级图
-          <span class="detail">55级以上</span>
-          <span class="check" id="ck3"></span>
+      <!-- Dropdown -->
+      <div class="dropdown-wrap" id="ddWrap">
+        <div class="dropdown" id="dd">
+          <div class="dd-header">🎯 选择要进入的挂机地图</div>
+          <div class="dd-list" id="ddList"></div>
         </div>
       </div>
-
-      <!-- Path indicator -->
-      <div id="pathIndicator" style="margin-top:4px; padding:8px 14px; border-radius:6px; border:1px dashed #334155; display:none; font-size:12px; color:#94a3b8; text-align:center;"></div>
     </div>
+
+    <div class="status-bar"><div class="status-text" id="statusText">等待启动...</div></div>
   </div>
 
-  <div class="map-list">
-    <div class="title">📋 地图列表（点击上方菜单选择）</div>
-    <div class="row">
-      <div class="item low">🟢 低级图 (1~39级)</div>
-      <div class="item mid">🟡 中级图 (40~54级)</div>
-      <div class="item high">🔴 高级图 (55级以上)</div>
-    </div>
+  <div class="flow-log" id="flowLog">
+    <div class="fl" id="fl1"><div class="n ok">✓</div><div class="text">窗口绑定验证通过</div></div>
+    <div class="fl" id="fl2"><div class="n ok">✓</div><div class="text">移动到NPC位置</div></div>
+    <div class="fl" id="fl3"><div class="n sel">③</div><div class="text"><strong style="color:#f59e0b;">选择挂机地图...</strong> 点选下方地图</div></div>
+    <div class="fl" id="fl4"><div class="n ok">✓</div><div class="text" id="resultText">已选择：</div></div>
+    <div class="fl" id="fl5"><div class="n">→</div><div class="text">target_map 已设置 → 找NPC进图 → F5挂机</div></div>
   </div>
 
-  <div class="flow-log" id="flowLog" style="display:none;">
-    <div class="fl"><div class="n ok">✓</div><div class="text" id="resultText">已选择：低级图</div></div>
-    <div class="fl"><div class="n">→</div><div class="text">target_map 已设定 → 自动跳转到对应路径找NPC进图</div></div>
+  <div class="result-banner" id="resultBanner">
+    <div class="big" id="bannerEmoji">🟡</div>
+    <div style="color:#e2e8f0; margin-top:4px;">已选择 <strong id="bannerName" style="color:#22c55e;">石墓一层(猪洞)</strong></div>
+    <div style="color:#64748b; font-size:11px; margin-top:2px;">target_map 已设为该地图名 → 继续执行后续步骤</div>
   </div>
 </div>
 
 <script>
-function selectMap(name, el) {
-  document.querySelectorAll('.dropdown .item').forEach(i => {
-    i.classList.remove('selected');
-    const ck = i.querySelector('.check');
-    if (ck) ck.textContent = '';
+const MAPS_DATA = [
+  { g:"🏘️ 安全区", items:[["盟重省","🏘️"],["比奇省","🏘️"],["毒蛇山谷","🏘️"]] },
+  { g:"🟢 沃玛寺庙", items:[["沃玛寺庙一层","🟢"],["沃玛寺庙二层","🟢"],["沃玛寺庙三层","🟢"]] },
+  { g:"🟡 石墓(猪洞)", items:[["石墓一层","🟡"],["石墓二层","🟡"],["石墓三层","🟡"],["石墓四层","🟡"],["石墓五层","🟡"],["猪洞七层","🟡"]] },
+  { g:"🔴 祖玛寺庙", items:[["祖玛寺庙一层","🔴"],["祖玛寺庙二层","🔴"],["祖玛寺庙三层","🔴"],["祖玛寺庙四层","🔴"],["祖玛寺庙五层","🔴"],["祖玛寺庙七层","🔴"]] },
+  { g:"🟢 死亡山谷(蜈蚣洞)", items:[["死亡山谷一层","🟢"],["死亡山谷二层","🟢"],["死亡山谷三层","🟢"]] },
+  { g:"🔴 赤月峡谷", items:[["赤月峡谷东","🔴"],["赤月峡谷西","🔴"],["赤月峡谷南","🔴"],["赤月峡谷北","🔴"],["赤月恶魔巢穴","🔴"]] },
+  { g:"🔴 牛魔寺庙", items:[["牛魔寺庙一层","🔴"],["牛魔寺庙二层","🔴"],["牛魔寺庙三层","🔴"],["牛魔寺庙四层","🔴"],["牛魔寺庙五层","🔴"],["牛魔大殿","🔴"]] },
+  { g:"🔴 骨魔洞", items:[["骨魔洞一层","🔴"],["骨魔洞二层","🔴"],["骨魔洞三层","🔴"],["骨魔洞四层","🔴"],["骨魔洞五层","🔴"]] },
+  { g:"🔴 尸魔洞", items:[["尸魔洞一层","🔴"],["尸魔洞二层","🔴"],["尸魔洞三层","🔴"]] },
+  { g:"🟣 幻境", items:[["幻境一层","🟣"],["幻境二层","🟣"],["幻境三层","🟣"],["幻境四层","🟣"],["幻境五层","🟣"],["幻境六层","🟣"],["幻境七层","🟣"],["幻境八层","🟣"],["幻境九层","🟣"],["幻境十层","🟣"]] },
+  { g:"🟣 其他", items:[["藏宝阁","🟣"],["桃源之门","🟢"]] }
+];
+
+// Build dropdown
+const ddList = document.getElementById('ddList');
+MAPS_DATA.forEach(g => {
+  const label = document.createElement('div');
+  label.className = 'dd-group-label';
+  label.textContent = g.g;
+  ddList.appendChild(label);
+  g.items.forEach(([name, emoji]) => {
+    const item = document.createElement('div');
+    item.className = 'dd-item';
+    item.dataset.name = name;
+    item.innerHTML = `<span class="emoji">${emoji}</span> ${name}<span class="check">✓</span>`;
+    item.onclick = function() { pickMap(name, emoji); };
+    ddList.appendChild(item);
   });
-  el.classList.add('selected');
-  const ck = el.querySelector('.check');
-  if (ck) ck.textContent = '✓';
+});
 
-  const emoji = name === '低级图' ? '🟢' : name === '中级图' ? '🟡' : '🔴';
-  const level = name === '低级图' ? '1~39级' : name === '中级图' ? '40~54级' : '55级以上';
+let animPlayed = false;
 
-  const pathEl = document.getElementById('pathIndicator');
-  pathEl.style.display = 'block';
-  pathEl.innerHTML = `${emoji} <strong style="color:#22c55e;">${name}</strong> (${level}) — 已选择！target_map 已设为 <strong style="color:#facc15;">${name}</strong>`;
+function playAnim() {
+  const btn = document.getElementById('playBtn');
+  if (animPlayed) { location.reload(); return; }
+  animPlayed = true;
+  
+  btn.textContent = '⏳ 播放中...';
+  btn.style.opacity = '0.6';
 
-  const log = document.getElementById('flowLog');
-  log.style.display = 'block';
-  document.getElementById('resultText').innerHTML = `✓ 已选择：${emoji} ${name}`;
+  const t1=document.getElementById('t1'), t2=document.getElementById('t2');
+  const t3=document.getElementById('t3'), t4=document.getElementById('t4');
+  const st=document.getElementById('statusText');
+  document.getElementById('flowLog').classList.add('show');
+
+  // Step 1
+  setTimeout(() => {
+    t1.className='tag run'; t1.textContent='运行';
+    st.innerHTML='🏁 工作流启动...';
+  }, 300);
+  setTimeout(() => {
+    t1.className='tag ok'; t1.textContent='✅';
+    t2.className='tag run'; t2.textContent='检测';
+    st.innerHTML='🔍 验证窗口绑定...';
+  }, 1000);
+  setTimeout(() => {
+    t2.className='tag ok'; t2.textContent='✅';
+    t3.className='tag run'; t3.textContent='移动';
+    st.innerHTML='➡️ 移动到NPC位置...';
+    document.getElementById('fl1').classList.add('show');
+    document.getElementById('fl2').classList.add('show');
+  }, 2200);
+  setTimeout(() => {
+    t3.className='tag ok'; t3.textContent='✅';
+    t4.className='tag run'; t4.textContent='选图';
+    st.innerHTML='👆 <strong style="color:#f59e0b;">请选择要挂机的地图</strong>';
+    document.getElementById('ddWrap').classList.add('open');
+    document.getElementById('fl3').classList.add('show');
+    btn.textContent = '⬇️ 点击下方地图选择';
+  }, 3500);
+}
+
+function pickMap(name, emoji) {
+  if (!animPlayed) return;
+
+  document.querySelectorAll('.dd-item').forEach(i => i.classList.remove('picked'));
+  const selected = Array.from(document.querySelectorAll('.dd-item')).find(i => i.dataset.name === name);
+  if (selected) selected.classList.add('picked');
+
+  document.getElementById('t4').className='tag ok';
+  document.getElementById('t4').textContent='✅';
+  
+  const st = document.getElementById('statusText');
+  st.innerHTML = `✅ 已选择 <strong style="color:#22c55e;">${emoji} ${name}</strong> → target_map 已设定`;
+
+  document.getElementById('resultText').innerHTML = `已选择：${emoji} ${name}`;
+  document.getElementById('bannerEmoji').textContent = emoji;
+  document.getElementById('bannerName').textContent = name;
+  document.getElementById('resultBanner').classList.add('show');
+
+  document.getElementById('fl4').classList.add('show');
+  
+  setTimeout(() => {
+    document.getElementById('fl5').classList.add('show');
+    const btn = document.getElementById('playBtn');
+    btn.textContent = '🔄 重播';
+    btn.style.opacity = '1';
+  }, 1000);
 }
 </script>
 </body>

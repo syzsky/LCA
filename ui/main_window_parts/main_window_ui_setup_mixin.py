@@ -433,7 +433,7 @@ class MainWindowUiSetupMixin:
 
         self.step_detail_label.setFont(font)
 
-        # 开源地址链接已移除
+        # 底部链接已清理
 
         self.step_detail_label.installEventFilter(self)
 

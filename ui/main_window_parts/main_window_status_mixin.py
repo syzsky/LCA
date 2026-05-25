@@ -269,7 +269,7 @@ class MainWindowStatusMixin:
 
         if obj is getattr(self, 'step_detail_label', None):
 
-            pass  # 移除开源链接定位
+            pass
 
         return super().eventFilter(obj, event)
 

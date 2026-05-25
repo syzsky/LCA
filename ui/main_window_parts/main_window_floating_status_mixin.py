@@ -64,3 +64,11 @@ class MainWindowFloatingStatusMixin:
         except Exception as e:
 
             logger.error(f"转发步骤日志失败: {e}")
+
+    def _get_first_bound_hwnd(self):
+        """获取第一个绑定的窗口句柄"""
+        for window_info in getattr(self, 'bound_windows', []) or []:
+            hwnd = int(window_info.get('hwnd', 0) or 0)
+            if hwnd > 0:
+                return hwnd
+        return None

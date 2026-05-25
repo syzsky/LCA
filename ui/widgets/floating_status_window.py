@@ -109,6 +109,16 @@ def create_icon(icon_type: str, size: int = 16, color: str = None) -> QIcon:
         # 叉号关闭图标
         painter.drawLine(margin, margin, size - margin, size - margin)
         painter.drawLine(size - margin, margin, margin, size - margin)
+    elif icon_type == "eye":
+        # 眼睛：一个扁椭圆 + 小圆点
+        cx, cy = size // 2, size // 2
+        painter.drawEllipse(cx - 4, cy - 2, 8, 4)  # 椭圆眼眶
+        painter.drawEllipse(cx - 1, cy - 1, 2, 2)  # 瞳孔
+    elif icon_type == "eye-off":
+        cx, cy = size // 2, size // 2
+        painter.drawEllipse(cx - 4, cy - 2, 8, 4)
+        painter.drawEllipse(cx - 1, cy - 1, 2, 2)
+        painter.drawLine(margin, margin, size - margin, size - margin)  # 斜线
 
     painter.end()
     return QIcon(pixmap)
@@ -258,7 +268,7 @@ class FloatingStatusWindow(QWidget):
     request_temporary_hide = Signal()
 
     COLLAPSED_HEIGHT = 52
-    EXPANDED_HEIGHT = 320
+    EXPANDED_HEIGHT = 480
     WINDOW_WIDTH = 380
 
     def __init__(self, parent=None):
@@ -280,6 +290,12 @@ class FloatingStatusWindow(QWidget):
         self._drag_start_pos = QPoint()
         self._is_running = False
         self._is_paused = False
+
+        self._live_preview_enabled = False
+        self._preview_timer = QTimer(self)
+        self._preview_timer.timeout.connect(self._capture_and_display)
+        self._target_hwnd = None
+        self._preview_freq = 1000
 
         self._start_hotkey = "Num7"
         self._pause_hotkey = "F11"
@@ -403,6 +419,17 @@ class FloatingStatusWindow(QWidget):
 
         header_layout.addWidget(btn_widget)
 
+        # 实时预览切换按钮
+        self._btn_preview = QPushButton()
+        self._btn_preview.setObjectName("floatingCtrlBtn")
+        self._btn_preview.setFixedSize(28, 28)
+        self._btn_preview.setToolTip("开启实时画面")
+        self._btn_preview.setIcon(create_icon("eye", 16))
+        self._btn_preview.setIconSize(QSize(16, 16))
+        self._btn_preview.setCheckable(True)
+        self._btn_preview.clicked.connect(self._toggle_live_preview)
+        header_layout.addWidget(self._btn_preview)
+
         # 展开按钮
         self._btn_expand = QPushButton()
         self._btn_expand.setObjectName("floatingExpandBtn")
@@ -439,6 +466,56 @@ class FloatingStatusWindow(QWidget):
         log_layout.addWidget(self._log_view, 1)
 
         container_layout.addWidget(self._log_panel, 1)
+
+        # 实时画面预览面板
+        self._preview_panel = QWidget()
+        self._preview_panel.setVisible(False)
+        self._preview_panel.setObjectName("floatingPreviewPanel")
+        self._preview_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self._preview_panel.setFixedHeight(380)
+        preview_layout = QVBoxLayout(self._preview_panel)
+        preview_layout.setContentsMargins(0, 4, 0, 0)
+        preview_layout.setSpacing(4)
+
+        # 预览面板顶部：提示文字 + 刷新频率选择
+        preview_header = QWidget()
+        preview_header_layout = QHBoxLayout(preview_header)
+        preview_header_layout.setContentsMargins(0, 0, 0, 0)
+        preview_header_layout.setSpacing(6)
+
+        preview_label = QLabel("🖥️ 实时画面")
+        preview_label.setObjectName("floatingPreviewLabel")
+        preview_label.setStyleSheet("font-size:11px; color:#888;")
+        preview_header_layout.addWidget(preview_label)
+
+        preview_header_layout.addStretch()
+
+        freq_label = QLabel("刷新:")
+        freq_label.setStyleSheet("font-size:10px; color:#888;")
+        preview_header_layout.addWidget(freq_label)
+
+        from PySide6.QtWidgets import QComboBox
+        self._preview_freq_combo = QComboBox()
+        self._preview_freq_combo.addItems(["0.5s", "1s", "2s"])
+        self._preview_freq_combo.setCurrentIndex(1)  # 默认1s
+        self._preview_freq_combo.setFixedWidth(60)
+        self._preview_freq_combo.setStyleSheet("font-size:10px;")
+        self._preview_freq_combo.currentIndexChanged.connect(self._on_preview_freq_changed)
+        preview_header_layout.addWidget(self._preview_freq_combo)
+
+        preview_layout.addWidget(preview_header)
+
+        # 画面显示区域
+        self._preview_label = QLabel()
+        self._preview_label.setObjectName("floatingPreviewImage")
+        self._preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._preview_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self._preview_label.setMinimumHeight(200)
+        self._preview_label.setStyleSheet("background-color: #1a1a1a; border-radius: 4px;")
+        self._preview_label.setText("暂无画面")
+        preview_layout.addWidget(self._preview_label, 1)
+
+        container_layout.addWidget(self._preview_panel, 1)
         main_layout.addWidget(self._container, 1)
 
         self._update_button_states()
@@ -490,6 +567,7 @@ class FloatingStatusWindow(QWidget):
             self._btn_expand.setIcon(create_icon("collapse", 14, color=_resolve_icon_color(True)))
             self._btn_expand.setToolTip("收起日志")
             self._log_panel.setVisible(True)
+            self._preview_panel.setVisible(True)
             target_height = self.EXPANDED_HEIGHT
             # 如果日志为空，显示提示
             if self._log_view.document().isEmpty():
@@ -498,6 +576,7 @@ class FloatingStatusWindow(QWidget):
         else:
             self._btn_expand.setIcon(create_icon("expand", 14, color=_resolve_icon_color(True)))
             self._btn_expand.setToolTip("展开日志")
+            self._preview_panel.setVisible(False)
             target_height = self.COLLAPSED_HEIGHT
 
         current_height = self.height()
@@ -607,6 +686,13 @@ class FloatingStatusWindow(QWidget):
         # 添加开始日志
         timestamp = time.strftime("%H:%M:%S")
         self._log_view.appendColoredLog(f"[{timestamp}] [信息] 主工作流开始执行")
+        # 自动开启预览（如果有目标窗口句柄）
+        if self._target_hwnd is not None and self._target_hwnd > 0:
+            self._live_preview_enabled = True
+            self._btn_preview.setChecked(True)
+            self._btn_preview.setIcon(create_icon("eye", 16, color=_resolve_icon_color(True)))
+            self._btn_preview.setToolTip("关闭实时画面")
+            self._preview_timer.start(self._preview_freq)
 
     @Slot(bool, str)
     def on_execution_finished(self, success: bool, message: str):
@@ -625,6 +711,8 @@ class FloatingStatusWindow(QWidget):
         status = "完成" if success else "停止"
         translated_message = _translate_status_message(message)
         self._log_view.appendColoredLog(f"[{timestamp}] [信息] 主工作流{status}: {translated_message[:40]}")
+        # 自动停止预览
+        self.stop_live_preview()
 
     @Slot()
     def on_execution_paused(self):
@@ -639,6 +727,81 @@ class FloatingStatusWindow(QWidget):
         self._status_indicator.set_running()
         self._status_label.setText("执行中...")
         self._update_button_states()
+
+    # ── 实时画面预览相关 ──────────────────────────────────────────
+
+    def set_target_hwnd(self, hwnd: int):
+        """设置目标窗口句柄"""
+        self._target_hwnd = hwnd
+
+    def _toggle_live_preview(self):
+        """开/关实时画面预览"""
+        if self._live_preview_enabled:
+            self.stop_live_preview()
+        else:
+            self._live_preview_enabled = True
+            self._preview_timer.start(self._preview_freq)
+            self._btn_preview.setIcon(create_icon("eye", 16, color=_resolve_icon_color(True)))
+            self._btn_preview.setToolTip("关闭实时画面")
+
+    def _on_preview_freq_changed(self, index: int):
+        """刷新频率变更"""
+        freq_map = {0: 500, 1: 1000, 2: 2000}
+        self._preview_freq = freq_map.get(index, 1000)
+        if self._preview_timer.isActive():
+            self._preview_timer.setInterval(self._preview_freq)
+
+    def _capture_and_display(self):
+        """定时触发：截图并显示"""
+        if self._target_hwnd is None or self._target_hwnd <= 0:
+            self._preview_label.setText("未绑定窗口")
+            return
+        if not self._live_preview_enabled:
+            return
+        try:
+            from services.screenshot_pool import capture_window
+            frame = capture_window(self._target_hwnd, client_area_only=True, use_cache=False)
+            if frame is None:
+                return
+            pixmap = self._numpy_to_pixmap(frame, max_width=360)
+            if pixmap is not None:
+                self._preview_label.setPixmap(pixmap)
+            else:
+                self._preview_label.setText("转换失败")
+        except Exception as e:
+            logger.warning(f"实时画面截图失败: {e}")
+
+    def _numpy_to_pixmap(self, frame, max_width=360):
+        """np.ndarray → QPixmap 转换"""
+        try:
+            import cv2
+            from PIL import Image as PILImage
+            height, width = frame.shape[:2]
+            scale = max_width / width
+            new_w = max_width
+            new_h = int(height * scale)
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            if scale < 1.0:
+                rgb = cv2.resize(rgb, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            pil_img = PILImage.fromarray(rgb)
+            from PySide6.QtGui import QImage
+            data = pil_img.tobytes("raw", "RGB")
+            qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format_RGB888)
+            from PySide6.QtGui import QPixmap
+            return QPixmap.fromImage(qimg)
+        except Exception as e:
+            logger.warning(f"转换截图失败: {e}")
+            return None
+
+    def stop_live_preview(self):
+        """停止实时画面预览"""
+        self._live_preview_enabled = False
+        self._preview_timer.stop()
+        self._btn_preview.setChecked(False)
+        self._btn_preview.setIcon(create_icon("eye", 16, color=_resolve_icon_color(False)))
+        self._btn_preview.setToolTip("开启实时画面")
+        self._preview_label.clear()
+        self._preview_label.setText("暂无画面")
 
     def reset(self):
         self._is_running = False
@@ -678,8 +841,20 @@ class FloatingWindowController:
     def on_workflow_started(self):
         self._is_workflow_running = True
         self._floating.clear_logs()
+        # 获取第一个绑定窗口的句柄，用于实时画面预览
+        hwnd = self._get_first_bound_hwnd()
+        if hwnd:
+            self._floating.set_target_hwnd(hwnd)
         self._floating.on_execution_started()
         self._update_visibility()
+
+    def _get_first_bound_hwnd(self):
+        """获取第一个绑定的窗口句柄"""
+        for window_info in getattr(self._main, 'bound_windows', []) or []:
+            hwnd = int(window_info.get('hwnd', 0) or 0)
+            if hwnd > 0:
+                return hwnd
+        return None
 
     def on_workflow_finished(self, success: bool, message: str):
         self._is_workflow_running = False

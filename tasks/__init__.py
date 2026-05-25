@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Task package initializer with lazy imports.
@@ -71,6 +71,7 @@ _PRIMARY_TASK_MODULE_PATHS = {
     "附加条件": "tasks.watchdog_monitor",
 "子工作流": "tasks.sub_workflow_task",
     "地图选择": "tasks.map_selector_task",
+    "窗口角色检测": "tasks.window_role_detection",
 }
 
 PRIMARY_TASK_MODULES = LazyTaskModuleDict(_PRIMARY_TASK_MODULE_PATHS)
@@ -112,6 +113,7 @@ _EXPORT_MODULES = {
     "thread_window_limit_task": "tasks.thread_window_limit_task",
     "click_coordinate": "tasks.click_coordinate",
     "task_utils": "tasks.task_utils",
+    "window_role_detection": "tasks.window_role_detection",
 }
 
 

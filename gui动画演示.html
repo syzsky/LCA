@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCA GUI 修改效果 - 动画演示</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f172a;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    width: 780px;
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  h1 {
+    color: #f1f5f9;
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .badge {
+    display: inline-block;
+    background: #22c55e;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-left: 8px;
+  }
+
+  /* ===== LCA Window Frame ===== */
+  .lca-window {
+    background: #0f172a;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .window-titlebar {
+    background: #1e293b;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #334155;
+  }
+  .window-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-red { background: #ef4444; }
+  .dot-yellow { background: #eab308; }
+  .dot-green { background: #22c55e; }
+  .window-title {
+    color: #94a3b8;
+    font-size: 12px;
+    margin-left: 12px;
+    flex: 1;
+  }
+
+  /* ===== LCA Main Content ===== */
+  .lca-content {
+    padding: 20px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* --- Top area --- */
+  .top-area {
+    display: flex;
+    gap: 16px;
+  }
+  .top-area .toolbar-placeholder {
+    background: #1e293b;
+    border-radius: 6px;
+    height: 36px;
+    flex: 1;
+    border: 1px solid #2a3a5a;
+  }
+  .top-area .btn-placeholder {
+    background: #1e293b;
+    border-radius: 6px;
+    width: 80px;
+    height: 36px;
+    border: 1px solid #2a3a5a;
+  }
+
+  /* --- Workflow area --- */
+  .workflow-area {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+  }
+  .sidebar {
+    width: 160px;
+    background: #1e293b;
+    border-radius: 6px;
+    border: 1px solid #2a3a5a;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sidebar-item {
+    height: 24px;
+    background: #2a3a5a;
+    border-radius: 4px;
+    opacity: 0.5;
+  }
+  .sidebar-item.active {
+    background: #3b82f6;
+    opacity: 1;
+  }
+  .canvas-area {
+    flex: 1;
+    background: #1e293b;
+    border-radius: 6px;
+    border: 1px solid #2a3a5a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+  }
+  .canvas-card {
+    background: #2a3a5a;
+    border-radius: 8px;
+    padding: 12px 20px;
+    border-left: 3px solid #3b82f6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .canvas-card .title {
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .canvas-card .desc {
+    color: #64748b;
+    font-size: 11px;
+  }
+
+  /* --- Status bar (THE KEY CHANGE) --- */
+  .status-bar {
+    background: #0c1929;
+    border-top: 1px solid #1e293b;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    min-height: 34px;
+  }
+  .status-bar .text {
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  /* Old open source link */
+  .old-link {
+    font-size: 12px;
+    color: #1E90FF;
+    text-decoration: underline;
+    cursor: pointer;
+    opacity: 1;
+  }
+
+  /* ===== Sponsor Dialog ===== */
+  .sponsor-dialog {
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid #334155;
+    position: relative;
+    overflow: hidden;
+  }
+  .sponsor-title {
+    color: #f1f5f9;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .sponsor-desc {
+    color: #64748b;
+    font-size: 12px;
+    margin: 6px 0 18px;
+  }
+  .qr-row {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+  }
+  .qr-col { text-align: center; }
+  .qr-col .label {
+    color: #cbd5e1;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .qr-img {
+    width: 130px;
+    height: 130px;
+    background: #fff;
+    border-radius: 6px;
+    margin: 0 auto;
+    transition: all 0.8s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .qr-img.qr-old {
+    background: #fff;
+    position: relative;
+  }
+  .qr-img.qr-old::after {
+    content: '';
+    position: absolute;
+    top: 15px; left: 15px;
+    width: 100px; height: 100px;
+    background: 
+      linear-gradient(90deg, #000 2px, transparent 2px) 0 0 / 10px 10px,
+      linear-gradient(0deg, #000 2px, transparent 2px) 0 0 / 10px 10px;
+    opacity: 0.8;
+  }
+  .qr-img.qr-new {
+    background: #fff;
+    border: 2px dashed #64748b;
+  }
+  .qr-img.qr-new span {
+    color: #64748b;
+    font-size: 11px;
+  }
+
+  .close-btn {
+    display: inline-block;
+    margin-top: 16px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 24px;
+    font-size: 13px;
+  }
+
+  /* ===== Animation ===== */
+  .animate-section-label {
+    color: #64748b;
+    font-size: 12px;
+    text-align: center;
+    margin: 16px 0 8px;
+    letter-spacing: 2px;
+  }
+  .play-btn {
+    display: block;
+    margin: 0 auto 16px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 32px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .play-btn:hover { background: #2563eb; }
+  .play-btn:active { transform: scale(0.97); }
+
+  /* Animations */
+  @keyframes fadeOutUp {
+    0% { opacity: 1; transform: translateY(0); }
+    60% { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 0; transform: translateY(-8px); display: none; }
+  }
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes qrShrink {
+    0% { width: 130px; height: 130px; opacity: 1; }
+    40% { width: 0; height: 130px; opacity: 0; }
+    100% { width: 130px; height: 130px; opacity: 1; }
+  }
+  @keyframes qrTransform {
+    0% { background: #fff; border: none; }
+    40% { background: #fff; border: none; width: 130px; height: 130px; }
+    60% { width: 0; height: 130px; background: #fff; }
+    80% { width: 130px; height: 130px; background: #fff; border: 2px dashed #64748b; }
+    100% { background: #fff; border: 2px dashed #64748b; }
+  }
+
+  .running .old-link {
+    animation: fadeOutUp 0.6s ease forwards;
+    animation-delay: 0.2s;
+  }
+  .running .qr-old {
+    animation: qrTransform 1.2s ease forwards;
+    animation-delay: 0.8s;
+  }
+  .running .qr-old::after {
+    animation: fadeOutUp 0.4s ease forwards;
+    animation-delay: 0.8s;
+  }
+  .running .qr-new-text {
+    animation: fadeInDown 0.5s ease forwards;
+    animation-delay: 1.6s;
+    opacity: 0;
+  }
+  .running .sparkle {
+    animation: sparkleAnim 0.4s ease forwards;
+    animation-delay: 1.8s;
+    opacity: 0;
+  }
+  @keyframes sparkleAnim {
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .sparkle {
+    display: inline-block;
+    margin-left: 4px;
+  }
+
+  .checklist {
+    margin-top: 12px;
+    display: none;
+  }
+  .running .checklist {
+    display: block;
+    animation: fadeInDown 0.5s ease forwards;
+    animation-delay: 2s;
+    opacity: 0;
+  }
+  .checklist-item {
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 3px 0;
+  }
+  .checklist-item .check { color: #22c55e; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>LCA GUI 修改效果 <span class="badge">BEFORE → AFTER</span></h1>
+  <p class="subtitle">点击播放按钮查看动画</p>
+
+  <button class="play-btn" onclick="playAnimation()" id="playBtn">▶ 播放动画</button>
+
+  <!-- ===== LCA Main Window ===== -->
+  <div class="lca-window" id="lcaWindow">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+      </div>
+      <div class="window-title">LCA - 低代码自动化</div>
+    </div>
+
+    <div class="lca-content">
+      <!-- Top toolbar -->
+      <div class="top-area">
+        <div class="toolbar-placeholder"></div>
+        <div class="btn-placeholder"></div>
+      </div>
+
+      <!-- Workflow canvas -->
+      <div class="workflow-area">
+        <div class="sidebar">
+          <div class="sidebar-item active"></div>
+          <div class="sidebar-item"></div>
+          <div class="sidebar-item"></div>
+        </div>
+        <div class="canvas-area">
+          <div class="canvas-card">
+            <div class="title">❶ 检测地图名</div>
+            <div class="desc">等待执行...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === STATUS BAR === -->
+    <div class="status-bar">
+      <span class="text">等待执行...</span>
+      <span class="old-link" id="oldLink">点击打开开源地址</span>
+    </div>
+  </div>
+
+  <!-- ===== Sponsor Dialog (below window) ===== -->
+  <div class="sponsor-dialog" id="sponsorDialog">
+    <div class="sponsor-title">感谢您的支持！❤️</div>
+    <div class="sponsor-desc">如果这个工具对您有帮助，欢迎赞助支持项目持续开发</div>
+    <div class="qr-row">
+      <div class="qr-col">
+        <div class="label">微信赞助</div>
+        <div class="qr-img qr-old" id="qrWechat">
+          <span class="qr-new-text" style="color:#64748b; font-size:11px; display:none;">空白占位</span>
+        </div>
+      </div>
+      <div class="qr-col">
+        <div class="label">支付宝赞助</div>
+        <div class="qr-img qr-old" id="qrAlipay">
+          <span class="qr-new-text" style="color:#64748b; font-size:11px; display:none;">空白占位</span>
+        </div>
+      </div>
+    </div>
+    <div class="close-btn">关闭</div>
+  </div>
+
+  <div class="checklist" id="checklist">
+    <div class="checklist-item"><span class="check">✓</span> 底部"点击打开开源地址"链接 → 已删除</div>
+    <div class="checklist-item"><span class="check">✓</span> `_open_official_website` 方法 → 已删除</div>
+    <div class="checklist-item"><span class="check">✓</span> `_position_qq_link_label` 方法 → 已删除</div>
+    <div class="checklist-item"><span class="check">✓</span> 微信二维码 → 白色虚线空白占位框</div>
+    <div class="checklist-item"><span class="check">✓</span> 支付宝二维码 → 白色虚线空白占位框</div>
+    <div class="checklist-item"><span class="check">✓</span> 代码注释中的"开源地址" → 全部清理</div>
+  </div>
+</div>
+
+<script>
+let played = false;
+function playAnimation() {
+  if (played) {
+    location.reload();
+    return;
+  }
+  played = true;
+  const btn = document.getElementById('playBtn');
+  btn.textContent = '⏳ 动画播放中...';
+  btn.style.opacity = '0.6';
+
+  const lcaWindow = document.getElementById('lcaWindow');
+  const sponsor = document.getElementById('sponsorDialog');
+
+  lcaWindow.classList.add('running');
+  sponsor.classList.add('running');
+
+  // QR old -> new transition
+  setTimeout(() => {
+    document.querySelectorAll('.qr-old').forEach(el => {
+      el.classList.add('qr-new');
+      el.classList.remove('qr-old');
+    });
+    document.querySelectorAll('.qr-new-text').forEach(el => {
+      el.style.display = 'inline';
+    });
+  }, 800);
+
+  // Reset button
+  setTimeout(() => {
+    btn.textContent = '🔄 重播';
+    btn.style.opacity = '1';
+  }, 3000);
+}
+</script>
+
+</body>
+</html>

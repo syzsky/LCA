@@ -119,6 +119,7 @@
   }
   .fl .n.ok { background: #22c55e; }
   .fl .n.sel { background: #f59e0b; color: #000; }
+  .fl .n.default { background: #6366f1; color: #fff; }
 
   .result-banner {
     margin-top: 12px; padding: 10px 16px; border-radius: 8px;
@@ -174,7 +175,7 @@
     <div class="fl" id="fl2"><div class="n ok">✓</div><div class="text">移动到NPC位置</div></div>
     <div class="fl" id="fl3"><div class="n sel">③</div><div class="text"><strong style="color:#f59e0b;">选择挂机地图...</strong> 点选下方地图</div></div>
     <div class="fl" id="fl4"><div class="n ok">✓</div><div class="text" id="resultText">已选择：</div></div>
-    <div class="fl" id="fl5"><div class="n">→</div><div class="text">target_map 已设置 → 找NPC进图 → F5挂机</div></div>
+    <div class="fl" id="fl5"><div class="n">→</div><div class="text" id="nextStepText">找NPC进图 → F5挂机 (有NPC图片的地图自动找)</div></div>
   </div>
 
   <div class="result-banner" id="resultBanner">
@@ -275,6 +276,17 @@ function pickMap(name, emoji) {
   document.getElementById('bannerEmoji').textContent = emoji;
   document.getElementById('bannerName').textContent = name;
   document.getElementById('resultBanner').classList.add('show');
+
+  // 判断是否是3个有NPC图片的地图
+  const hasNpcImages = ['低级图', '中级图', '高级图'].includes(name);
+  const nextStep = document.getElementById('nextStepText');
+  if (hasNpcImages) {
+    nextStep.innerHTML = `🔍 ${name}有NPC图片 → 自动找NPC传送员 → 进图 → F5挂机`;
+    nextStep.style.color = '#22c55e';
+  } else {
+    nextStep.innerHTML = `ℹ️ "${name}"没有NPC图片 → 直接到NPC位置按F5挂机(手动确认位置)`;
+    nextStep.style.color = '#eab308';
+  }
 
   document.getElementById('fl4').classList.add('show');
   

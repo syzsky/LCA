@@ -22,20 +22,49 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller
 
       - name: Build EXE with PyInstaller
         id: build
+        shell: pwsh
         run: |
           $tag = git rev-parse --short HEAD
           $name = "LCA-$tag"
-          pyinstaller --onefile `
-            --name $name `
-            --add-data "resources;resources" `
-            --add-data "images;images" `
-            --add-data "themes;themes" `
-            --add-data "plugins;plugins" `
-            --add-data "OLA;OLA" `
+          
+          # 构建 add-data 参数，只添加存在的目录
+          $addDataArgs = @()
+          @("resources", "images", "themes", "plugins", "OLA") | ForEach-Object {
+            if (Test-Path $_) {
+              $addDataArgs += "--add-data"
+              $addDataArgs += "$_;$_"
+            }
+          }
+          
+          Write-Host "Add-data args: $($addDataArgs -join ' ')"
+          
+          # 构建 exclude-module 参数
+          $excludeArgs = @()
+          @(
+            "dxcam", "fastdeploy-python", "fastdeploy-tools",
+            "winsdk", "winrt-runtime",
+            "winrt-Windows.AI.MachineLearning", "winrt-Windows.Foundation",
+            "winrt-Windows.Graphics", "winrt-Windows.Graphics.Capture",
+            "winrt-Windows.Graphics.Capture.Interop", "winrt-Windows.Graphics.DirectX",
+            "winrt-Windows.Graphics.DirectX.Direct3D11", "winrt-Windows.Graphics.Imaging",
+            "uiautomation", "WMI",
+            "selenium", "Appium-Python-Client",
+            "trio", "trio-websocket", "websocket-client", "wsproto",
+            "uvicorn", "pynput",
+            "PyAutoGUI", "PyGetWindow", "PyMsgBox", "PyRect", "PyScreeze", "PyDirectInput",
+            "pyperclip", "pyreadline3", "pysocks", "pytweening",
+            "sortedcontainers", "altgraph", "decorator", "distro",
+            "flatbuffers", "humanfriendly", "jiter", "mpmath", "sympy", "zstandard"
+          ) | ForEach-Object {
+            $excludeArgs += "--exclude-module"
+            $excludeArgs += $_
+          }
+          
+          # 执行打包
+          pyinstaller --onefile --name $name @addDataArgs @excludeArgs `
             --hidden-import=PySide6 `
             --hidden-import=PySide6.QtCore `
             --hidden-import=PySide6.QtGui `
@@ -47,24 +76,40 @@ jobs:
             --hidden-import=keyboard `
             --hidden-import=mouse `
             --hidden-import=mss `
-            --hidden-import=dxcam `
             --hidden-import=appium `
             --hidden-import=openai `
             --hidden-import=onnxruntime `
             --hidden-import=cryptography `
             --hidden-import=comtypes `
             main.py
-          Write-Output "exe_name=$name.exe" >> $env:GITHUB_OUTPUT
-          Write-Output "exe_path=dist\$name.exe" >> $env:GITHUB_OUTPUT
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ PyInstaller failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+          
+          $exePath = "dist\$name.exe"
+          if (Test-Path $exePath) {
+            $size = (Get-Item $exePath).Length
+            Write-Host "✅ Build success: $exePath ($size bytes)"
+            Write-Output "exe_name=$name.exe" >> $env:GITHUB_OUTPUT
+            Write-Output "exe_path=$exePath" >> $env:GITHUB_OUTPUT
+            Write-Output "BUILD_SUCCESS=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "❌ EXE file not found"
+            Write-Output "BUILD_SUCCESS=false" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
 
       - name: Upload artifact
+        if: steps.build.outputs.BUILD_SUCCESS == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: LCA-EXE
           path: dist/${{ steps.build.outputs.exe_name }}
 
       - name: Create Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.build.outputs.BUILD_SUCCESS == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.sha }}

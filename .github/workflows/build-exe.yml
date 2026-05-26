@@ -24,13 +24,11 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build EXE with PyInstaller
-        id: build
         shell: pwsh
         run: |
           $tag = git rev-parse --short HEAD
           $name = "LCA-$tag"
           
-          # 构建 add-data 参数，只添加存在的目录
           $addDataArgs = @()
           @("resources", "images", "themes", "plugins", "OLA") | ForEach-Object {
             if (Test-Path $_) {
@@ -39,7 +37,6 @@ jobs:
             }
           }
           
-          # 构建 exclude-module 参数
           $excludeArgs = @()
           @(
             "dxcam", "fastdeploy-python", "fastdeploy-tools",
@@ -61,7 +58,6 @@ jobs:
             $excludeArgs += $_
           }
           
-          # 执行打包
           pyinstaller --onefile --name $name @addDataArgs @excludeArgs `
             --hidden-import=PySide6 `
             --hidden-import=PySide6.QtCore `
@@ -90,15 +86,31 @@ jobs:
           if (Test-Path $exePath) {
             $size = (Get-Item $exePath).Length
             Write-Host "✅ Build success: $exePath ($([math]::Round($size/1MB, 1))MB)"
-            # 写入标记文件，供后续步骤判断
-            "true" | Out-File -FilePath "build_success.txt" -Encoding utf8
           } else {
             Write-Host "❌ EXE file not found"
+            Get-ChildItem dist/ -Recurse | ForEach-Object { Write-Host $_.FullName }
             exit 1
           }
 
-      - name: Create Release & Upload
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LCA-EXE
+          path: dist/*.exe
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: LCA-EXE
+          path: dist/
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0

@@ -77,6 +77,7 @@ jobs:
             --hidden-import=onnxruntime `
             --hidden-import=cryptography `
             --hidden-import=comtypes `
+            --hidden-import=tzdata `
             main.py
           
           if ($LASTEXITCODE -ne 0) {

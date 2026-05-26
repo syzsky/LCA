@@ -39,8 +39,6 @@ jobs:
             }
           }
           
-          Write-Host "Add-data args: $($addDataArgs -join ' ')"
-          
           # 构建 exclude-module 参数
           $excludeArgs = @()
           @(
@@ -84,43 +82,36 @@ jobs:
             main.py
           
           if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ PyInstaller failed with exit code $LASTEXITCODE"
+            Write-Host "❌ PyInstaller failed"
             exit 1
           }
           
           $exePath = "dist\$name.exe"
           if (Test-Path $exePath) {
             $size = (Get-Item $exePath).Length
-            Write-Host "✅ Build success: $exePath ($size bytes)"
-            Write-Output "exe_name=$name.exe" >> $env:GITHUB_OUTPUT
-            Write-Output "exe_path=$exePath" >> $env:GITHUB_OUTPUT
-            Write-Output "BUILD_SUCCESS=true" >> $env:GITHUB_OUTPUT
+            Write-Host "✅ Build success: $exePath ($([math]::Round($size/1MB, 1))MB)"
+            # 写入标记文件，供后续步骤判断
+            "true" | Out-File -FilePath "build_success.txt" -Encoding utf8
           } else {
             Write-Host "❌ EXE file not found"
-            Write-Output "BUILD_SUCCESS=false" >> $env:GITHUB_OUTPUT
             exit 1
           }
 
-      - name: Upload artifact
-        if: steps.build.outputs.BUILD_SUCCESS == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: LCA-EXE
-          path: dist/${{ steps.build.outputs.exe_name }}
-
-      - name: Create Release
-        if: steps.build.outputs.BUILD_SUCCESS == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Create Release & Upload
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.sha }}
-          name: LCA Build ${{ github.run_number }}
+          tag_name: v1.0.0
+          name: LCA v1.0.0
           body: |
-            自动构建的 Windows 可执行文件
+            LCA 自动化框架 v1.0.0
             
-            - 提交: ${{ github.sha }}
-            - 构建时间: ${{ github.event.repository.updated_at }}
-            - 入口: main.py
-            - 打包工具: PyInstaller --onefile
-          files: ${{ steps.build.outputs.exe_path }}
+            - 多窗口挂机
+            - 角色标签检测（战士/法师/道士）
+            - 地图选择器
+            - 图像识别（模板匹配/OCR/YOLO）
+            - 工作流引擎
+            - 录制回放
+          files: dist/*.exe
           draft: false
           prerelease: false

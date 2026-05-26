@@ -32,7 +32,7 @@ jobs:
           $name = "LCA-$tag"
           
           $addDataArgs = @()
-          @("resources", "images", "themes", "plugins", "OLA") | ForEach-Object {
+          @("resources", "images", "themes", "plugins") | ForEach-Object {
             if (Test-Path $_) {
               $addDataArgs += "--add-data"
               $addDataArgs += "$_;$_"
@@ -54,7 +54,11 @@ jobs:
             "PyAutoGUI", "PyGetWindow", "PyMsgBox", "PyRect", "PyScreeze", "PyDirectInput",
             "pyperclip", "pyreadline3", "pysocks", "pytweening",
             "sortedcontainers", "altgraph", "decorator", "distro",
-            "flatbuffers", "humanfriendly", "jiter", "mpmath", "sympy", "zstandard"
+            "flatbuffers", "humanfriendly", "jiter", "mpmath", "sympy", "zstandard",
+            "OLA", "OLAPlugServer", "OLAPlugDLLHelper", "OLAPlugCOMLoader",
+            "plugins.adapters.ola", "plugins.adapters.ola.adapter",
+            "plugins.adapters.ola.auth", "plugins.adapters.ola.runtime_config",
+            "plugins.adapters.ola.multi_instance_manager"
           ) | ForEach-Object {
             $excludeArgs += "--exclude-module"
             $excludeArgs += $_

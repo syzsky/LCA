@@ -10,7 +10,10 @@ import shutil
 import time
 from typing import Dict, List, Optional, Any
 from .interface import IPluginAdapter, PluginCapability
-from plugins.adapters.ola.runtime_config import normalize_ola_auth_settings
+try:
+    from plugins.adapters.ola.runtime_config import normalize_ola_auth_settings
+except ImportError:
+    normalize_ola_auth_settings = None
 from utils.app_paths import get_config_path, get_user_data_dir
 
 logger = logging.getLogger(__name__)
@@ -234,8 +237,12 @@ class PluginManager:
 
             # 动态加载插件适配器
             if plugin_name == "ola":
-                from plugins.adapters.ola.adapter import OLAAdapter
-                adapter = OLAAdapter()
+                try:
+                    from plugins.adapters.ola.adapter import OLAAdapter
+                    adapter = OLAAdapter()
+                except ImportError:
+                    logger.warning("OLA 插件不可用")
+                    return False
             else:
                 logger.error(f"未知的插件类型: {plugin_name}")
                 return False

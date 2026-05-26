@@ -64,3 +64,4 @@ winrt-Windows.Graphics.Imaging==3.2.1
 winsdk==1.0.0b10
 WMI==1.5.1
 zipp==3.23.0
+# build trigger 1779793228

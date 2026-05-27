@@ -10,10 +10,7 @@ import shutil
 import time
 from typing import Dict, List, Optional, Any
 from .interface import IPluginAdapter, PluginCapability
-try:
-    from plugins.adapters.ola.runtime_config import normalize_ola_auth_settings
-except ImportError:
-    normalize_ola_auth_settings = None
+from plugins.adapters.ola.runtime_config import normalize_ola_auth_settings
 from utils.app_paths import get_config_path, get_user_data_dir
 
 logger = logging.getLogger(__name__)

@@ -175,6 +175,12 @@ def get_runtime_data_dir(app_name: str = "LCA") -> str:
 
 
 def get_workflows_dir(app_name: str = "LCA") -> str:
+    # PyInstaller --onefile 模式下，add-data 文件解压到 sys._MEIPASS 临时目录
+    # 优先从 _MEIPASS 查找 workflows，回退到 EXE 所在目录
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        meipass_workflows = os.path.join(sys._MEIPASS, "workflows")
+        if os.path.isdir(meipass_workflows):
+            return meipass_workflows
     return _ensure_dir(os.path.join(get_app_root(), "workflows"))
 
 

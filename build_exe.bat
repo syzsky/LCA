@@ -48,7 +48,7 @@ echo [✓] 依赖安装完成
 :: 打包 EXE
 echo [4/4] 打包 EXE（需要几分钟）...
 pip install pyinstaller -q
-pyinstaller --noconfirm --onedir --windowed --name "LCA" --icon "NONE" --add-data "resources;resources" --add-data "themes;themes" --add-data "ui;ui" --add-data "tasks;tasks" --add-data "services;services" --add-data "utils;utils" --add-data "tools;tools" --add-data "plugins;plugins" --add-data "OLA;OLA" --add-data "app_core;app_core" --add-data "task_workflow;task_workflow" --hidden-import=PySide6 --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui --hidden-import=PySide6.QtWidgets --hidden-import=cv2 --hidden-import=numpy --hidden-import=PIL --hidden-import=pywin32 --hidden-import=win32api --hidden-import=win32con --hidden-import=win32gui --hidden-import=pynput --hidden-import=keyboard --hidden-import=mouse --hidden-import=mss --hidden-import=uiautomation main.py
+pyinstaller --noconfirm --onedir --windowed --name "LCA" --icon "NONE" --add-data "resources;resources" --add-data "themes;themes" --add-data "ui;ui" --add-data "tasks;tasks" --add-data "services;services" --add-data "utils;utils" --add-data "tools;tools" --add-data "plugins;plugins" --add-data "app_core;app_core" --add-data "task_workflow;task_workflow" --add-data "workflows;workflows" --add-data "images;images" --hidden-import=PySide6 --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui --hidden-import=PySide6.QtWidgets --hidden-import=cv2 --hidden-import=numpy --hidden-import=PIL --hidden-import=pywin32 --hidden-import=win32api --hidden-import=win32con --hidden-import=win32gui --hidden-import=pynput --hidden-import=keyboard --hidden-import=mouse --hidden-import=mss --hidden-import=uiautomation main.py
 
 if errorlevel 1 (
     echo [错误] 打包失败

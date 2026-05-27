@@ -20,8 +20,11 @@ runtime_data/
 # Local runtime/user data
 config.json
 workflow_favorites.json
-images/
-workflows/
+
+# 示例模板图片和 workflow 文件不忽略
+!images/templates/
+!workflows/
+!*.module.json
 docs/打包发布.txt
 _publish_worktree/
 

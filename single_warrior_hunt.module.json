@@ -1,0 +1,112 @@
+{
+  "cards": [
+    {
+      "id": "c0",
+      "type": "window_bind_task",
+      "parameters": {
+        "window_title": "传奇2",
+        "timeout_seconds": 10
+      }
+    },
+    {
+      "id": "c1",
+      "type": "delay_task",
+      "parameters": {
+        "delay_ms": 3000
+      }
+    },
+    {
+      "id": "c2",
+      "type": "image_match_click",
+      "parameters": {
+        "image_path": "images/templates/盟重省.png",
+        "search_region": [0, 500, 300, 60],
+        "click_type": "none",
+        "match_threshold": 0.8,
+        "timeout_seconds": 5,
+        "on_fail_action": "retry"
+      }
+    },
+    {
+      "id": "c3",
+      "type": "conditional_control",
+      "parameters": {
+        "condition": "last_match_success",
+        "success": "c4",
+        "failure": "c1"
+      }
+    },
+    {
+      "id": "c4",
+      "type": "image_match_click",
+      "parameters": {
+        "image_path": "images/templates/npc_传送低级.png",
+        "search_region": [200, 300, 300, 150],
+        "click_type": "left",
+        "match_threshold": 0.75,
+        "timeout_seconds": 5,
+        "on_fail_action": "skip"
+      }
+    },
+    {
+      "id": "c5",
+      "type": "image_match_click",
+      "parameters": {
+        "image_path": "images/templates/进入低级图按钮.png",
+        "search_region": [350, 400, 120, 40],
+        "click_type": "left",
+        "match_threshold": 0.7,
+        "timeout_seconds": 5,
+        "on_fail_action": "skip"
+      }
+    },
+    {
+      "id": "c6",
+      "type": "delay_task",
+      "parameters": {
+        "delay_ms": 2000
+      }
+    },
+    {
+      "id": "c7",
+      "type": "image_match_click",
+      "parameters": {
+        "image_path": "images/templates/低级图.png",
+        "search_region": [0, 500, 200, 40],
+        "click_type": "none",
+        "match_threshold": 0.85,
+        "timeout_seconds": 5,
+        "on_fail_action": "skip"
+      }
+    },
+    {
+      "id": "c8",
+      "type": "conditional_control",
+      "parameters": {
+        "condition": "last_match_success",
+        "success": "c9",
+        "failure": "c1"
+      }
+    },
+    {
+      "id": "c9",
+      "type": "keyboard_input",
+      "parameters": {
+        "keys": ["F5"],
+        "press_duration_ms": 50
+      }
+    }
+  ],
+  "connections": [
+    {"start_card_id":"c0","end_card_id":"c1","type":"success"},
+    {"start_card_id":"c1","end_card_id":"c2","type":"success"},
+    {"start_card_id":"c2","end_card_id":"c3","type":"success"},
+    {"start_card_id":"c3","end_card_id":"c4","type":"success"},
+    {"start_card_id":"c4","end_card_id":"c5","type":"success"},
+    {"start_card_id":"c5","end_card_id":"c6","type":"success"},
+    {"start_card_id":"c6","end_card_id":"c7","type":"success"},
+    {"start_card_id":"c7","end_card_id":"c8","type":"success"},
+    {"start_card_id":"c8","end_card_id":"c9","type":"success"},
+    {"start_card_id":"c9","end_card_id":"c1","type":"success"}
+  ]
+}

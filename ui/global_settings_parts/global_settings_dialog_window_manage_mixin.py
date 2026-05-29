@@ -133,6 +133,15 @@ class GlobalSettingsDialogWindowManageMixin:
 
             parent_window._update_main_window_title()
 
+        # 更新浮动窗口实时预览
+        floating = getattr(parent_window, '_floating_status_window', None)
+        if floating and hasattr(floating, 'set_bound_windows'):
+            floating.set_bound_windows(self.bound_windows)
+        # 兼容 controller 方式
+        controller = getattr(parent_window, '_floating_controller', None)
+        if controller and hasattr(controller, 'on_bound_windows_changed'):
+            controller.on_bound_windows_changed()
+
     def _find_duplicate_bound_window(self, window_title: str, hwnd: int = 0):
 
         safe_title = str(window_title or '').strip()

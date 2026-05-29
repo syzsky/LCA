@@ -81,6 +81,7 @@ TASK_MODULES_DICT = LazyTaskModuleDict(
         **_PRIMARY_TASK_MODULE_PATHS,
         "字库识别": "tasks.dict_ocr_task",
         "图片点击": "tasks.image_match_click",
+        "点击指定坐标": "tasks.click_coordinate",
     }
 )
 

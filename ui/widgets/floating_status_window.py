@@ -771,6 +771,12 @@ class FloatingStatusWindow(QWidget):
         if self._live_preview_enabled:
             self.stop_live_preview()
         else:
+            # 检查是否有有效窗口
+            hwnd = self._get_first_bound_hwnd()
+            if not hwnd:
+                logger.warning("没有绑定窗口，无法开启实时预览")
+                return
+            self._target_hwnd = hwnd
             self._live_preview_enabled = True
             self._preview_timer.start(self._preview_freq)
             self._btn_preview.setIcon(create_icon("eye", 16, color=_resolve_icon_color(True)))
@@ -923,13 +929,8 @@ class FloatingWindowController:
         """绑定窗口变化时更新实时预览（外部调用）"""
         hwnd = self._get_first_bound_hwnd()
         if hwnd:
-            self.set_target_hwnd(hwnd)
-
-    def on_bound_windows_changed(self):
-        """绑定窗口变化时更新实时预览（外部调用）"""
-        hwnd = self._get_first_bound_hwnd()
-        if hwnd:
-            self.set_target_hwnd(hwnd)
+            self._floating.set_target_hwnd(hwnd)
+            self._floating.set_bound_windows(getattr(self._main, 'bound_windows', []) or [])
 
     def on_workflow_finished(self, success: bool, message: str):
         self._is_workflow_running = False

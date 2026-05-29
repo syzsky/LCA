@@ -788,11 +788,15 @@ class FloatingStatusWindow(QWidget):
         if not self._bound_windows:
             self._preview_label.setText("未绑定窗口")
             return
-        if self._target_hwnd is None or self._target_hwnd <= 0:
+        # 自动获取第一个绑定窗口的 hwnd
+        current_hwnd = self._get_first_bound_hwnd()
+        if current_hwnd is None or current_hwnd <= 0:
             self._preview_label.setText("未绑定窗口")
             return
         if not self._live_preview_enabled:
             return
+        # 使用当前获取的 hwnd
+        self._target_hwnd = current_hwnd
         try:
             from services.screenshot_pool import capture_window
             frame = capture_window(self._target_hwnd, client_area_only=True, use_cache=False)
@@ -912,6 +916,20 @@ class FloatingWindowController:
             if hwnd > 0:
                 return hwnd
         return None
+
+
+
+    def on_bound_windows_changed(self):
+        """绑定窗口变化时更新实时预览（外部调用）"""
+        hwnd = self._get_first_bound_hwnd()
+        if hwnd:
+            self.set_target_hwnd(hwnd)
+
+    def on_bound_windows_changed(self):
+        """绑定窗口变化时更新实时预览（外部调用）"""
+        hwnd = self._get_first_bound_hwnd()
+        if hwnd:
+            self.set_target_hwnd(hwnd)
 
     def on_workflow_finished(self, success: bool, message: str):
         self._is_workflow_running = False
